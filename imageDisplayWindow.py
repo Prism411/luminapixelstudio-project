@@ -1,8 +1,18 @@
+import os
+import shutil
 import tkinter as tk
+from tkinter import filedialog, ttk
+
+from PIL import ImageTk, Image
+
+from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redimensionar_imagem, negativo, \
+    alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica
+
 
 class ImageDisplayWindow(tk.Toplevel):
-    def __init__(self, parent, image):
+    def __init__(self, parent, imagepath, image):
         super().__init__(parent)
+        self.imagepath = imagepath
         self.title("Imagem Selecionada")
         self.geometry("920x720")  # Tamanho da nova janela
         self.resizable(False, False)  # Bloqueie a capacidade de redimensionar a janela
@@ -34,6 +44,163 @@ class ImageDisplayWindow(tk.Toplevel):
 
         # Coloca a imagem no Canvas
         self.canvas.create_image(x_position, y_position, image=image, anchor='nw')
-
         # Mantém uma referência à imagem
         self.image = image
+
+        # Botão para selecionar uma imagem
+        self.select_image_button = tk.Button(self, text="Selecionar Imagem", command=self.select_image)
+        self.select_image_button.pack()
+        self.select_image_button.place(x=400, y=320)
+
+        # Variável para rastrear a escolha do usuário
+        self.selected_operation = tk.StringVar(value="None")
+
+        # Botões de opção para Dissolve Cruzado
+        self.dissolve_cruzado_button = tk.Radiobutton(self, text="Dissolve Cruzado", variable=self.selected_operation, value="Dissolve Cruzado")
+        self.dissolve_cruzado_button.pack()
+        self.dissolve_cruzado_button.place(x=340, y=294)
+
+        # Botões de opção para Dissolve Cruzado Não-Uniforme
+        self.dissolve_cruzado_nao_uniforme_button = tk.Radiobutton(self, text="Dissolve Cruzado N.U.", variable=self.selected_operation, value="Dissolve Cruzado N.U.")
+        self.dissolve_cruzado_nao_uniforme_button.pack()
+        self.dissolve_cruzado_nao_uniforme_button.place(x=460, y=294)
+
+        # Combobox para selecionar um valor alpha
+        self.alpha_values = ["0.0", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0"]
+        self.alpha_combobox = ttk.Combobox(self, values=self.alpha_values)
+        self.alpha_combobox.set("0.5")  # Defina o valor padrão como 0.5
+        self.alpha_combobox.pack()
+        self.alpha_combobox.place(x=550, y=320)
+        selected_alpha = self.alpha_combobox.get()
+        print(f"Valor selecionado em alpha_combobox: {selected_alpha}")
+
+        # Cria um widget para exibir a imagem selecionada
+        self.selected_image_label = tk.Label(self, text="imagem", fg="#202225", bg="#202225")
+        self.selected_image_label.pack()
+        self.selected_image_label.place(x=630, y=20)
+
+        # Variável para rastrear a escolha do usuário
+        self.selected_operation = tk.StringVar()
+        self.selected_operation.set("Transformação de Intensidade:")  # Defina o valor inicial
+
+        # Combobox para selecionar uma operação
+        self.operations_combobox = ttk.Combobox(self, textvariable=self.selected_operation)
+        self.operations_combobox['values'] = (
+            "Alargamento de Contraste",
+            "Negativo",
+            "Limiarização",
+            "Transformação de Potência",
+            "Transformação Logarítmica"
+        )
+        self.operations_combobox.pack()
+        self.operations_combobox.place(x=200, y=360)
+        self.operations_combobox.bind("<<ComboboxSelected>>", self.show_value_input)
+
+        # Rótulo para descrever o campo de entrada de valor
+        self.value_label = tk.Label(self, text="Valor:")
+        self.value_label.pack()
+        self.value_label.place(x=330, y=360)
+
+        # Campo de entrada para o valor
+        self.value_entry = tk.Entry(self)
+        self.value_entry.pack()
+        self.value_entry.place(x=370, y=360)
+
+        # Inicialmente oculta o campo de entrada e o rótulo
+        self.value_entry.place_forget()
+        self.value_label.place_forget()
+        output_path = "luminaprocessing/resultado.png"
+        # Adicione o botão Processar
+        self.process_button = tk.Button(self, text="Processar", command=self.process_image)
+        self.process_button.pack()
+        self.process_button.place(x=600, y=360)
+        #agora crie um botao bem do lado na coordenada x = 600, y = 360 com o nome "Processar"
+       # ele pega o threshold e qual operacao vai fazer a partir das combobox e do entry label.
+        #negativo(self.image_path, output_path)
+       # alargamento_contraste(self.image_path, output_path)
+       # limiarizacao(self.image_path, output_path, threshold)
+       # transformacao_potencia(self.image_path, output_path, gamma)
+       # transformacao_logaritmica(self.image_path, output_path, c)
+    def process_image(self):
+        # Obtém a operação selecionada e o valor, se necessário
+        operation = self.selected_operation.get()
+        value = self.value_entry.get() if self.value_entry['state'] != 'disabled' else None
+
+        output_path = "luminaprocessing/resultado.png"
+
+        # Chama a função correspondente baseada na operação selecionada
+        if operation == "Negativo":
+            negativo(self.imagepath, output_path)
+        elif operation == "Alargamento de Contraste":
+            alargamento_contraste(self.imagepath, output_path)
+        elif operation == "Limiarização":
+            limiarizacao(self.imagepath, output_path, float(value))
+        elif operation == "Transformação de Potência":
+            transformacao_potencia(self.imagepath, output_path, float(value))
+        elif operation == "Transformação Logarítmica":
+            transformacao_logaritmica(self.imagepath, output_path, float(value))
+            # Carregue e exiba a imagem selecionada
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência para evitar que a imagem seja coletada pelo garbage collector
+    def show_value_input(self, event):
+        selected_operation = self.selected_operation.get()
+
+        # Condições para mostrar ou ocultar o campo de entrada de valor
+        if selected_operation in ("Limiarização", "Transformação de Potência", "Transformação Logarítmica"):
+            self.value_entry.place(x=450, y=360)
+            self.value_label.place(x=390, y=360)
+            self.value_entry.configure(state='normal')
+        else:
+            self.value_entry.place_forget()
+            self.value_label.place_forget()
+            self.value_entry.delete(0, 'end')
+
+        # Atualiza o rótulo do valor com base na operação selecionada
+        if selected_operation == "Limiarização":
+            self.value_label.config(text="Threshold:")
+        elif selected_operation == "Transformação de Potência":
+            self.value_label.config(text="Gamma:")
+
+        elif selected_operation == "Transformação Logarítmica":
+            self.value_label.config(text="C:")
+    def select_image(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Imagens", "*.png *.jpg *.jpeg *.gif *.bmp")])
+        if file_path:
+            self.selected_image_path = file_path
+            print(f"Caminho da imagem selecionada: {self.selected_image_path}")
+
+            # Verifique a pasta "luminaprocessing" e conte quantos arquivos de imagem já existem
+            processing_folder = "luminaprocessing"
+            if not os.path.exists(processing_folder):
+                os.makedirs(processing_folder)
+
+            existing_files = os.listdir(processing_folder)
+            num_existing_files = len([f for f in existing_files if f.startswith("image_")])
+
+            # Crie um novo nome de arquivo para a imagem com base no número atual de arquivos
+            new_filename = os.path.join(processing_folder, f"image_{num_existing_files}.png")
+
+            # Copie o arquivo de imagem selecionado para a pasta de processamento com o novo nome
+            shutil.copy(self.selected_image_path, new_filename)
+
+            print(f"Imagem copiada para: {new_filename}")
+
+            #dependendo da opcao a new filename ira rodar a funcao
+            dissolve_cruzado(self.imagepath, file_path, new_filename,float(self.alpha_combobox.get()))
+            #ou
+            dissolve_cruzado_nao_uniforme(self.imagepath, file_path, new_filename,float(self.alpha_combobox.get()))
+
+            # Carregue e exiba a imagem selecionada
+            self.selected_image = Image.open(new_filename)
+            self.selected_image = self.selected_image.resize((256, 256))
+            self.selected_image = ImageTk.PhotoImage(self.selected_image)
+            self.selected_image_label.config(image=self.selected_image)
+            self.selected_image_label.image = self.selected_image  # Mantenha uma referência para evitar que a imagem seja coletada pelo garbage collector
+
+
+        pass
+
+

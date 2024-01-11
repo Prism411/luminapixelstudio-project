@@ -1,3 +1,5 @@
+import os
+import shutil
 import tkinter as tk
 from tkinter import ttk, filedialog, simpledialog
 from PIL import Image, ImageTk
@@ -51,18 +53,32 @@ class MainMenu(tk.Tk):
         self.image_processing_button = ttk.Button(self, text="Selecionar Imagem", command=self.select_image)
         self.image_processing_button.pack()
 
+
+
     def select_image(self):
         file_path = filedialog.askopenfilename(filetypes=[("Imagens", "*.png *.jpg *.jpeg *.gif *.bmp")])
         if file_path:
             image = Image.open(file_path)
             image.thumbnail((512, 512))
             self.selected_image = ImageTk.PhotoImage(image)
-            self.show_selected_image()
+            self.show_selected_image(file_path)
 
-    def show_selected_image(self):
+            # Verifique a pasta "luminaprocessing" e conte quantos arquivos de imagem já existem
+            processing_folder = "luminaprocessing"
+            if not os.path.exists(processing_folder):
+                os.makedirs(processing_folder)
+            existing_files = os.listdir(processing_folder)
+            num_existing_files = len([f for f in existing_files if f.startswith("image_")])
+            # Crie um novo nome de arquivo para a imagem com base no número atual de arquivos
+            new_filename = os.path.join(processing_folder, f"image_{num_existing_files}.png")
+            # Copie o arquivo de imagem selecionado para a pasta de processamento com o novo nome
+            shutil.copy(file_path, new_filename)
+
+            print(f"Imagem copiada para: {new_filename}")
+    def show_selected_image(self,file_path):
         if self.selected_image:
             # Abra uma nova janela para exibir a imagem centralizada
-            image_window = ImageDisplayWindow(self, image=self.selected_image)
+            image_window = ImageDisplayWindow(self,file_path, image=self.selected_image)
             image_window.grab_set()
     def process_images(self):
         # Implemente a lógica para processamento de imagens aqui
@@ -78,6 +94,18 @@ class MainMenu(tk.Tk):
            """
         simpledialog.messagebox.showinfo("Contato", contact_text)
 
+def limpar_pasta_luminaprocessing():
+    processing_folder = "luminaprocessing"
+    if os.path.exists(processing_folder):
+        for filename in os.listdir(processing_folder):
+            file_path = os.path.join(processing_folder, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                print(f"Erro ao excluir o arquivo {file_path}: {e}")
+
 if __name__ == "__main__":
+    limpar_pasta_luminaprocessing()
     app = MainMenu()
     app.mainloop()
