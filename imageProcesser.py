@@ -146,3 +146,150 @@ def realce_contraste_adaptativo(imagem, c, tamanho_kernel):
     imagem_processada = generic_filter(imagem_cinza, funcao_filtro, size=(tamanho_kernel, tamanho_kernel))
 
     return imagem_processada.astype(np.uint8)
+
+# Função para mudança de escala (scaling)
+def scale_image(image, scale_x, scale_y, output_path):
+    height, width = image.shape[:2]
+    # Calculando o novo tamanho com base nos fatores de escala
+    new_width = int(width * scale_x)
+    new_height = int(height * scale_y)
+    # Redimensionando a imagem
+    scaled_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
+    # Salvando a imagem transformada
+    cv2.imwrite(output_path, scaled_image)
+    return scaled_image
+
+def shear_image(image, shear_x, shear_y, output_path):
+    rows, cols = image.shape[:2]
+
+    # Matriz de transformação para cisalhamento
+    M = np.float32([[1, shear_x, 0],
+                    [shear_y, 1, 0],
+                    [0, 0, 1]])
+
+    # Aplicando a transformação
+    sheared_image = cv2.warpPerspective(image, M, (cols, rows))
+    cv2.imwrite(output_path, sheared_image)  # Salvando a imagem transformada
+    return sheared_image
+
+def reflect_image(image, axis):
+    # axis = 0 para reflexão horizontal, 1 para vertical
+    return cv2.flip(image, axis)
+
+# Função para rotação (rotation)
+def rotate_image(image, angle, center=None, scale=1.0):
+    (h, w) = image.shape[:2]
+    if center is None:
+        center = (w // 2, h // 2)
+
+    # Matriz de rotação
+    M = cv2.getRotationMatrix2D(center, angle, scale)
+
+    # Aplicando a rotação
+    rotated_image = cv2.warpAffine(image, M, (w, h))
+    return rotated_image
+
+def vertical_pinch(image, amount):
+    rows, cols = image.shape[:2]
+    # Criação do mapa de coordenadas para o pinch vertical
+    map_x = np.zeros((rows, cols), dtype=np.float32)
+    map_y = np.zeros((rows, cols), dtype=np.float32)
+
+    for i in range(rows):
+        for j in range(cols):
+            # Altera a coordenada y para criar o efeito de pinch
+            map_x[i, j] = j
+            map_y[i, j] = i + amount * np.sin(np.pi * j / cols)
+
+    # Aplicando a transformação
+    pinched_image = cv2.remap(image, map_x, map_y, interpolation=cv2.INTER_LINEAR)
+    return pinched_image
+
+def edge_pinch(image, amount):
+    rows, cols = image.shape[:2]
+    # Criação do mapa de coordenadas para o pinch nas bordas
+    map_x = np.zeros((rows, cols), dtype=np.float32)
+    map_y = np.zeros((rows, cols), dtype=np.float32)
+
+    for i in range(rows):
+        for j in range(cols):
+            # Altera as coordenadas para criar o efeito de pinch nas bordas
+            offset_x = abs(cols/2 - j) / (cols/2) * amount
+            offset_y = abs(rows/2 - i) / (rows/2) * amount
+            map_x[i, j] = j + offset_x
+            map_y[i, j] = i + offset_y
+
+    # Aplicando a transformação
+    pinched_edges_image = cv2.remap(image, map_x, map_y, interpolation=cv2.INTER_LINEAR)
+    return pinched_edges_image
+
+def field_based_warping(image, field):
+    rows, cols = image.shape[:2]
+    # Criação do mapa de coordenadas para o warping baseado em campos
+    map_x = np.zeros((rows, cols), dtype=np.float32)
+    map_y = np.zeros((rows, cols), dtype=np.float32)
+
+    for i in range(rows):
+        for j in range(cols):
+            # Altera as coordenadas com base no campo de vetores
+            map_x[i, j] = j + field[i, j][0]
+            map_y[i, j] = i + field[i, j][1]
+
+    # Aplicando a transformação
+    warped_image = cv2.remap(image, map_x, map_y, interpolation=cv2.INTER_LINEAR)
+    return warped_image
+
+# Note que para a função field_based_warping, você precisará fornecer um 'campo' apropriado,
+# que é um array de vetores indicando como cada pixel deve ser movido.
+def vertical_pinch(image, amount):
+    rows, cols = image.shape[:2]
+    # Criação do mapa de coordenadas para o pinch vertical
+    map_x = np.zeros((rows, cols), dtype=np.float32)
+    map_y = np.zeros((rows, cols), dtype=np.float32)
+
+    for i in range(rows):
+        for j in range(cols):
+            # Altera a coordenada y para criar o efeito de pinch
+            map_x[i, j] = j
+            map_y[i, j] = i + amount * np.sin(np.pi * j / cols)
+
+    # Aplicando a transformação
+    pinched_image = cv2.remap(image, map_x, map_y, interpolation=cv2.INTER_LINEAR)
+    return pinched_image
+
+def edge_pinch(image, amount):
+    rows, cols = image.shape[:2]
+    # Criação do mapa de coordenadas para o pinch nas bordas
+    map_x = np.zeros((rows, cols), dtype=np.float32)
+    map_y = np.zeros((rows, cols), dtype=np.float32)
+
+    for i in range(rows):
+        for j in range(cols):
+            # Altera as coordenadas para criar o efeito de pinch nas bordas
+            offset_x = abs(cols/2 - j) / (cols/2) * amount
+            offset_y = abs(rows/2 - i) / (rows/2) * amount
+            map_x[i, j] = j + offset_x
+            map_y[i, j] = i + offset_y
+
+    # Aplicando a transformação
+    pinched_edges_image = cv2.remap(image, map_x, map_y, interpolation=cv2.INTER_LINEAR)
+    return pinched_edges_image
+
+def field_based_warping(image, field):
+    rows, cols = image.shape[:2]
+    # Criação do mapa de coordenadas para o warping baseado em campos
+    map_x = np.zeros((rows, cols), dtype=np.float32)
+    map_y = np.zeros((rows, cols), dtype=np.float32)
+
+    for i in range(rows):
+        for j in range(cols):
+            # Altera as coordenadas com base no campo de vetores
+            map_x[i, j] = j + field[i, j][0]
+            map_y[i, j] = i + field[i, j][1]
+
+    # Aplicando a transformação
+    warped_image = cv2.remap(image, map_x, map_y, interpolation=cv2.INTER_LINEAR)
+    return warped_image
+
+# Note que para a função field_based_warping, você precisará fornecer um 'campo' apropriado,
+# que é um array de vetores indicando como cada pixel deve ser movido.

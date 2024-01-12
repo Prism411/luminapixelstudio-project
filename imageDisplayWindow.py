@@ -3,11 +3,12 @@ import shutil
 import tkinter as tk
 from tkinter import filedialog, ttk
 
-
+import cv2
+import numpy as np
 from PIL import ImageTk, Image
 
 from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redimensionar_imagem, negativo, \
-    alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica
+    alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, scale_image, shear_image
 
 
 class ImageDisplayWindow(tk.Toplevel):
@@ -55,6 +56,7 @@ class ImageDisplayWindow(tk.Toplevel):
 
         # Variável para rastrear a escolha do usuário
         self.selected_operation = tk.StringVar(value="None")
+        self.operationReso = tk.StringVar(value="None")
 
         # Botões de opção para Dissolve Cruzado
         self.dissolve_cruzado_button = tk.Radiobutton(self, text="Dissolve Cruzado", variable=self.selected_operation, value="Dissolve Cruzado")
@@ -156,7 +158,54 @@ class ImageDisplayWindow(tk.Toplevel):
         self.expansion_button.pack()
         self.expansion_button.place(x=640, y=420)
 
+        # Combobox para selecionar uma operação
+        self.operationReso = tk.StringVar()
+        self.reso_combobox = ttk.Combobox(self, textvariable=self.operationReso)
+        self.reso_combobox['values'] = ("Scaling", "Cisalhamento")
+        self.reso_combobox.pack()
+        self.reso_combobox.place(x=200, y=450)
+        self.reso_combobox.bind("<<ComboboxSelected>>", self.reso_operation)  # Remova os parênteses
 
+        # Crie um rótulo para a Resolução X"
+        label = tk.Label(self, text="Resolucão X:")
+        label.pack()
+        label.place(x=345, y=450)
+        #Label de Valor para Resolucao X
+        self.resX_entry = tk.Entry(self)
+        self.resX_entry.pack()
+        self.resX_entry.place(x=420, y=450)
+        # Crie um rótulo para a Resolução Y"
+        label = tk.Label(self, text="Resolucão Y:")
+        label.pack()
+        label.place(x=550, y=450)
+        #Label de Valor para Resolucao Y
+        self.resY_entry = tk.Entry(self)
+        self.resY_entry.pack()
+        self.resY_entry.place(x=625, y=450)
+        # Crie um rótulo para o aviso de perigo
+        label = tk.Label(self, text="Cuidado ao usar valores > 1.0", fg="red")
+        label.pack()
+        label.place(x=755, y=450)
+
+    def reso_operation(self, event):
+        operation = self.operationReso.get()
+        scale_x, scale_y = float(self.resX_entry.get()), float(self.resY_entry.get())
+        # Converter a imagem do Tkinter (PhotoImage) para o formato do OpenCV
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
+        output_path = "luminaprocessing/resultado.png"
+
+        if operation == "Scaling":
+            scale_image(imageInput, scale_x, scale_y, output_path)
+        elif operation == "Cisalhamento":
+            shear_image(imageInput, scale_x, scale_y, output_path)
+
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
 
     def ctrl_contraste(self):
         print("teste")
