@@ -3,6 +3,7 @@ import shutil
 import tkinter as tk
 from tkinter import filedialog, ttk
 
+
 from PIL import ImageTk, Image
 
 from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redimensionar_imagem, negativo, \
@@ -48,7 +49,7 @@ class ImageDisplayWindow(tk.Toplevel):
         self.image = image
 
         # Botão para selecionar uma imagem
-        self.select_image_button = tk.Button(self, text="Selecionar Imagem", command=self.select_image)
+        self.select_image_button = tk.Button(self, text="Selecionar Cruzada", command=self.select_image)
         self.select_image_button.pack()
         self.select_image_button.place(x=400, y=320)
 
@@ -114,20 +115,60 @@ class ImageDisplayWindow(tk.Toplevel):
         self.process_button = tk.Button(self, text="Processar", command=self.process_image)
         self.process_button.pack()
         self.process_button.place(x=600, y=360)
-        #agora crie um botao bem do lado na coordenada x = 600, y = 360 com o nome "Processar"
-       # ele pega o threshold e qual operacao vai fazer a partir das combobox e do entry label.
-        #negativo(self.image_path, output_path)
-       # alargamento_contraste(self.image_path, output_path)
-       # limiarizacao(self.image_path, output_path, threshold)
-       # transformacao_potencia(self.image_path, output_path, gamma)
-       # transformacao_logaritmica(self.image_path, output_path, c)
+
+
+        # Adicione o botão Equalização
+        self.equal_button = tk.Button(self, text="Equalização Histograma", command=self.equali_hist)
+        self.equal_button.pack()
+        self.equal_button.place(x=200, y=390)
+        # Crie um rótulo para a palavra "Ganho"
+        label = tk.Label(self, text="Ganho:")
+        label.pack()
+        label.place(x=490, y=392)
+        #Label de Valor para Expansão
+        self.expansion_entry = tk.Entry(self)
+        self.expansion_entry.pack()
+        self.expansion_entry.place(x=550, y=392)
+        # Adicione o botão expansão
+        self.expansion_button = tk.Button(self, text="Expansão Histograma", command=self.expansion_hist)
+        self.expansion_button.pack()
+        self.expansion_button.place(x=350, y=390)
+
+
+        # Crie um rótulo para a palavra "Constante C"
+        label = tk.Label(self, text="Constante C:")
+        label.pack()
+        label.place(x=200, y=422)
+        #Label de Valor para Constante C
+        self.c_constant_entry = tk.Entry(self)
+        self.c_constant_entry.pack()
+        self.c_constant_entry.place(x=280, y=422)
+        # Crie um rótulo para a palavra "Vizinhança NxN"
+        label = tk.Label(self, text="Vizinhança NxN:")
+        label.pack()
+        label.place(x=410, y=422)
+        #Label de Valor para Vizinhança NxN
+        self.nxn_entry = tk.Entry(self)
+        self.nxn_entry.pack()
+        self.nxn_entry.place(x=510, y=422)
+        # Adicione o botão controleConstraste
+        self.expansion_button = tk.Button(self, text="Controle Contraste", command=self.ctrl_contraste)
+        self.expansion_button.pack()
+        self.expansion_button.place(x=640, y=420)
+
+
+
+    def ctrl_contraste(self):
+        print("teste")
+    def equali_hist(self):
+        print("teste")
+    def expansion_hist(self):
+        print("teste")
     def process_image(self):
         # Obtém a operação selecionada e o valor, se necessário
         operation = self.selected_operation.get()
         value = self.value_entry.get() if self.value_entry['state'] != 'disabled' else None
-
         output_path = "luminaprocessing/resultado.png"
-
         # Chama a função correspondente baseada na operação selecionada
         if operation == "Negativo":
             negativo(self.imagepath, output_path)
