@@ -208,7 +208,8 @@ class ImageDisplayWindow(tk.Toplevel):
         self.selected_image_label.image = self.selected_image  # Mantenha uma referência
 
     def ctrl_contraste(self):
-        print("teste")
+        #realce_contraste_adaptativo(imagem, c, tamanho_kernel, output_path)
+        pass
     def equali_hist(self):
         print("teste")
     def expansion_hist(self):
@@ -289,8 +290,6 @@ class ImageDisplayWindow(tk.Toplevel):
             self.selected_image = ImageTk.PhotoImage(self.selected_image)
             self.selected_image_label.config(image=self.selected_image)
             self.selected_image_label.image = self.selected_image  # Mantenha uma referência para evitar que a imagem seja coletada pelo garbage collector
-
-
         pass
 
 

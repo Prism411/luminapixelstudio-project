@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 from scipy.ndimage import generic_filter
 def redimensionar_imagem(image_path, novo_tamanho):
     # Abra a imagem
@@ -84,16 +85,18 @@ def transformacao_logaritmica(image_path, output_path, c):
     log_transformed = Image.eval(image, lambda x: int(c * np.log(1 + x)))
     log_transformed.save(output_path)
 
-def expand_histogram_auto(image, gain):
+def expand_histogram_auto(image, gain,output_path):
     # Aplica a expansão do histograma de forma automática
     expanded_image = np.copy(image)
     expanded_image = expanded_image * gain
     expanded_image[expanded_image < 0] = 0
     expanded_image[expanded_image > 255] = 255
-    return expanded_image.astype(np.uint8)
+    imagem_processada_uint8 = expanded_image.astype(np.uint8)
+    cv2.imwrite(output_path, imagem_processada_uint8)
+    return expanded_image
 
 
-def histogram_equalization(image):
+def histogram_equalization(image,output_path):
     # Calcula o histograma da imagem
     hist, _ = np.histogram(image, bins=256, range=(0, 256))
 
@@ -105,47 +108,43 @@ def histogram_equalization(image):
 
     # Aplica a equalização do histograma à imagem
     equalized_image = cdf_normalized[image]
+    imagem_processada_uint8 = equalized_image.astype(np.uint8)
+    cv2.imwrite(output_path, imagem_processada_uint8)
+    return equalized_image
 
-    return equalized_image.astype(np.uint8)
 
-
-def realce_contraste_adaptativo(imagem, c, tamanho_kernel):
+def realce_contraste_adaptativo(imagem, c, tamanho_kernel, output_path):
     """
     Aplica realce de contraste adaptativo a uma imagem usando a fórmula exata fornecida.
-
     Parâmetros:
     - imagem: matriz numpy da imagem
     - c: parâmetro constante não negativo que controla a intensidade do aumento de contraste
     - tamanho_kernel: tamanho do bairro n x n para calcular a média e o desvio padrão
-
     Retorna:
     - imagem_processada: imagem após a aplicação do realce de contraste adaptativo
     """
-    # Função a ser aplicada para cada bairro de pixels
+
     def funcao_filtro(bairro):
-        # Calcular a média local e o desvio padrão
         media_local = np.mean(bairro)
         desvio_padrao_local = np.std(bairro)
-
-        # Pixel central no bairro
         pixel_central = bairro[tamanho_kernel ** 2 // 2]
-
-        # Aplicar a fórmula de realce de contraste
         if desvio_padrao_local != 0:
             return media_local + c * (pixel_central - media_local) / desvio_padrao_local
         else:
             return pixel_central
 
-    # Converter imagem em escala de cinza se ainda não estiver
     if len(imagem.shape) > 2:
         imagem_cinza = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
     else:
         imagem_cinza = imagem
 
-    # Aplicar a função de filtro a cada pixel usando uma janela móvel (kernel)
     imagem_processada = generic_filter(imagem_cinza, funcao_filtro, size=(tamanho_kernel, tamanho_kernel))
 
-    return imagem_processada.astype(np.uint8)
+    # Convertendo para o tipo correto e salvando a imagem
+    imagem_processada_uint8 = imagem_processada.astype(np.uint8)
+    cv2.imwrite(output_path, imagem_processada_uint8)
+
+    return imagem_processada_uint8
 
 # Função para mudança de escala (scaling)
 def scale_image(image, scale_x, scale_y, output_path):
@@ -293,3 +292,12 @@ def field_based_warping(image, field):
 
 # Note que para a função field_based_warping, você precisará fornecer um 'campo' apropriado,
 # que é um array de vetores indicando como cada pixel deve ser movido.
+def plot_histogram(image):
+    hist, bins = np.histogram(image, bins=256, range=(0, 256))
+    plt.figure()
+    plt.title("Histogram")
+    plt.xlabel("Pixel Value")
+    plt.ylabel("Frequency")
+    plt.plot(hist, color="black")
+    plt.xlim([0, 256])
+    plt.show()
