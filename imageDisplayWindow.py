@@ -8,7 +8,8 @@ import numpy as np
 from PIL import ImageTk, Image
 
 from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redimensionar_imagem, negativo, \
-    alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, scale_image, shear_image
+    alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, scale_image, shear_image, \
+    realce_contraste_adaptativo, histogram_equalization, expand_histogram_auto
 
 
 class ImageDisplayWindow(tk.Toplevel):
@@ -127,10 +128,10 @@ class ImageDisplayWindow(tk.Toplevel):
         label = tk.Label(self, text="Ganho:")
         label.pack()
         label.place(x=490, y=392)
-        #Label de Valor para Expansão
-        self.expansion_entry = tk.Entry(self)
-        self.expansion_entry.pack()
-        self.expansion_entry.place(x=550, y=392)
+        #Label de Valor para Ganho
+        self.gain_entry = tk.Entry(self)
+        self.gain_entry.pack()
+        self.gain_entry.place(x=550, y=392)
         # Adicione o botão expansão
         self.expansion_button = tk.Button(self, text="Expansão Histograma", command=self.expansion_hist)
         self.expansion_button.pack()
@@ -157,6 +158,11 @@ class ImageDisplayWindow(tk.Toplevel):
         self.expansion_button = tk.Button(self, text="Controle Contraste", command=self.ctrl_contraste)
         self.expansion_button.pack()
         self.expansion_button.place(x=640, y=420)
+        # Botao de Aviso de Desempenho
+        # Crie um rótulo para a Resolução Y"
+        label = tk.Label(self, text="Pode demorar um pouco!",fg="red")
+        label.pack()
+        label.place(x=760, y=420)
 
         # Combobox para selecionar uma operação
         self.operationReso = tk.StringVar()
@@ -209,10 +215,47 @@ class ImageDisplayWindow(tk.Toplevel):
 
     def ctrl_contraste(self):
         #realce_contraste_adaptativo(imagem, c, tamanho_kernel, output_path)
-        pass
+        tamanho_kernel = int(self.nxn_entry.get())
+        c = float(self.c_constant_entry.get())
+        output_path = "luminaprocessing/resultado.png"
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
+        result = realce_contraste_adaptativo(imageInput, c, tamanho_kernel)
+        imagem_final = Image.fromarray(np.array(result, dtype=np.uint8))
+        imagem_final.save(output_path)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
+
     def equali_hist(self):
-        print("teste")
+        output_path = "luminaprocessing/resultado.png"
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
+        histogram_equalization(imageInput, output_path,True)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
+
     def expansion_hist(self):
+        output_path = "luminaprocessing/resultado.png"
+        gain = int(self.gain_entry.get())
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
+        expand_histogram_auto(imageInput,gain,output_path,True)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
+
+
         print("teste")
     def process_image(self):
         # Obtém a operação selecionada e o valor, se necessário

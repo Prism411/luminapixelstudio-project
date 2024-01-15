@@ -85,7 +85,9 @@ def transformacao_logaritmica(image_path, output_path, c):
     log_transformed = Image.eval(image, lambda x: int(c * np.log(1 + x)))
     log_transformed.save(output_path)
 
-def expand_histogram_auto(image, gain,output_path):
+import matplotlib.pyplot as plt
+
+def expand_histogram_auto(image, gain, output_path, show_histogram):
     # Aplica a expansão do histograma de forma automática
     expanded_image = np.copy(image)
     expanded_image = expanded_image * gain
@@ -93,10 +95,17 @@ def expand_histogram_auto(image, gain,output_path):
     expanded_image[expanded_image > 255] = 255
     imagem_processada_uint8 = expanded_image.astype(np.uint8)
     cv2.imwrite(output_path, imagem_processada_uint8)
+
+    if show_histogram:
+        plt.hist(imagem_processada_uint8.ravel(), bins=256, range=(0, 256))
+        plt.title("Histograma - Expansão Automática")
+        plt.show()
+
     return expanded_image
 
 
-def histogram_equalization(image,output_path):
+
+def histogram_equalization(image, output_path, show_histogram):
     # Calcula o histograma da imagem
     hist, _ = np.histogram(image, bins=256, range=(0, 256))
 
@@ -110,41 +119,70 @@ def histogram_equalization(image,output_path):
     equalized_image = cdf_normalized[image]
     imagem_processada_uint8 = equalized_image.astype(np.uint8)
     cv2.imwrite(output_path, imagem_processada_uint8)
+
+    if show_histogram:
+        plt.hist(imagem_processada_uint8.ravel(), bins=256, range=(0, 256))
+        plt.title("Histograma - Equalização")
+        plt.show()
+
     return equalized_image
 
 
-def realce_contraste_adaptativo(imagem, c, tamanho_kernel, output_path):
-    """
-    Aplica realce de contraste adaptativo a uma imagem usando a fórmula exata fornecida.
-    Parâmetros:
-    - imagem: matriz numpy da imagem
-    - c: parâmetro constante não negativo que controla a intensidade do aumento de contraste
-    - tamanho_kernel: tamanho do bairro n x n para calcular a média e o desvio padrão
-    Retorna:
-    - imagem_processada: imagem após a aplicação do realce de contraste adaptativo
-    """
+#####################################################################################################################
+def converter_para_cinza(imagem):
+    altura, largura = len(imagem), len(imagem[0])
+    imagem_cinza = [[0 for _ in range(largura)] for _ in range(altura)]
 
+    for i in range(altura):
+        for j in range(largura):
+            vermelho, verde, azul = imagem[i][j]
+            cinza = int(0.299 * vermelho + 0.587 * verde + 0.114 * azul)
+            imagem_cinza[i][j] = cinza
+
+    return imagem_cinza
+
+def calcular_media(bairro):
+    soma = sum(bairro)
+    return soma / len(bairro)
+
+def calcular_desvio_padrao(bairro, media):
+    soma_diferencas_quadradas = sum((x - media) ** 2 for x in bairro)
+    return (soma_diferencas_quadradas / len(bairro)) ** 0.5
+
+def aplicar_kernel(imagem, tamanho_kernel, funcao_filtro):
+    altura, largura = len(imagem), len(imagem[0])
+    imagem_saida = [[0 for _ in range(largura)] for _ in range(altura)]
+
+    offset = tamanho_kernel // 2
+
+    for i in range(offset, altura - offset):
+        for j in range(offset, largura - offset):
+            bairro = [imagem[i + x][j + y] for x in range(-offset, offset + 1) for y in range(-offset, offset + 1)]
+            imagem_saida[i][j] = funcao_filtro(bairro)
+
+    return imagem_saida
+
+def realce_contraste_adaptativo(imagem, c, tamanho_kernel):
     def funcao_filtro(bairro):
-        media_local = np.mean(bairro)
-        desvio_padrao_local = np.std(bairro)
-        pixel_central = bairro[tamanho_kernel ** 2 // 2]
+        media_local = calcular_media(bairro)
+        desvio_padrao_local = calcular_desvio_padrao(bairro, media_local)
+        pixel_central = bairro[len(bairro) // 2]
+
         if desvio_padrao_local != 0:
-            return media_local + c * (pixel_central - media_local) / desvio_padrao_local
+            return int(media_local + c * (pixel_central - media_local) / desvio_padrao_local)
         else:
             return pixel_central
 
-    if len(imagem.shape) > 2:
-        imagem_cinza = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
-    else:
-        imagem_cinza = imagem
+    # Primeiro, converte a imagem para escala de cinza
+    imagem_cinza = converter_para_cinza(imagem)
 
-    imagem_processada = generic_filter(imagem_cinza, funcao_filtro, size=(tamanho_kernel, tamanho_kernel))
+    # Depois, aplica o realce de contraste adaptativo
+    imagem_processada = aplicar_kernel(imagem_cinza, tamanho_kernel, funcao_filtro)
+    return imagem_processada
 
-    # Convertendo para o tipo correto e salvando a imagem
-    imagem_processada_uint8 = imagem_processada.astype(np.uint8)
-    cv2.imwrite(output_path, imagem_processada_uint8)
+#######################################################################################################
 
-    return imagem_processada_uint8
+
 
 # Função para mudança de escala (scaling)
 def scale_image(image, scale_x, scale_y, output_path):
@@ -170,6 +208,7 @@ def shear_image(image, shear_x, shear_y, output_path):
     sheared_image = cv2.warpPerspective(image, M, (cols, rows))
     cv2.imwrite(output_path, sheared_image)  # Salvando a imagem transformada
     return sheared_image
+##############################################################################################
 
 def reflect_image(image, axis):
     # axis = 0 para reflexão horizontal, 1 para vertical
