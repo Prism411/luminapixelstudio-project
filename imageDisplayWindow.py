@@ -9,7 +9,8 @@ from PIL import ImageTk, Image
 
 from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redimensionar_imagem, negativo, \
     alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, scale_image, shear_image, \
-    realce_contraste_adaptativo, histogram_equalization, expand_histogram_auto
+    realce_contraste_adaptativo, histogram_equalization, expand_histogram_auto, reflect_image, rotate_image, \
+    rotate_image2, field_based_warping, edge_pinch, vertical_pinch
 
 
 class ImageDisplayWindow(tk.Toplevel):
@@ -192,6 +193,160 @@ class ImageDisplayWindow(tk.Toplevel):
         label = tk.Label(self, text="Cuidado ao usar valores > 1.0", fg="red")
         label.pack()
         label.place(x=755, y=450)
+
+    # Refletir Imagem
+    # Variável para rastrear a escolha do usuário
+        self.selOPR = tk.StringVar(value="None")
+        self.operationReso = tk.StringVar(value="None")
+        # Botões de opção para Inverte Horizontal
+        self.invertH = tk.Radiobutton(self, text="Inverte Horizontal", variable=self.selOPR,value="ih",command=self.invert_operation)
+        self.invertH.pack()
+        self.invertH.place(x=20, y=50)
+
+        # Botões de opção para Inverte Vertical
+        self.invertV= tk.Radiobutton(self, text="Inverte Vertical",variable=self.selOPR,value="iv",command=self.invert_operation)
+        self.invertV.pack()
+        self.invertV.place(x=160, y=50)
+    #Fim de Refletir a Imagem
+
+
+
+    #Rotação
+        # Crie um rótulo para a palavra "Rotaçao da Imagem"
+        label = tk.Label(self, text="Angulo para Rotaçao")
+        label.pack()
+        label.place(x=20, y=80)
+        #Label de Valor para Rotação
+        self.rot_entry = tk.Entry(self)
+        self.rot_entry.pack()
+        self.rot_entry.place(x=20, y=110)
+        # Adicione o botão Rotacao
+        self.rot_button = tk.Button(self, text="Rotacionar", command=self.rota_operation)
+        self.rot_button.pack()
+        self.rot_button.place(x=150, y=80)
+        # Adicione o botão Rotacao 2
+        self.rot2_button = tk.Button(self, text="Rotacionar 2", command=self.rota_operation2)
+        self.rot2_button.pack()
+        self.rot2_button.place(x=150, y=110)
+        # Crie um rótulo para o aviso de perigo
+        label = tk.Label(self, text="Rotacao 2 é a rotação com Interpolação Bilinear\n PODE DEMORAR DEPENDENDO DO PC!", fg="red")
+        label.pack()
+        label.place(x=20, y=140)
+        #FIM DA ROTAÇÃO##################################
+
+
+
+        #######começo Warping e Pinch##############################################
+        # Variável para rastrear a escolha do usuário
+        self.selected_opr_pinch_warp = tk.StringVar()
+        self.selected_operation.set("Escolha Warp/Pinch!")
+        # Combobox para selecionar uma operação
+        self.opr_warp_pinch_combobox = ttk.Combobox(self, textvariable=self.selected_opr_pinch_warp)
+        self.opr_warp_pinch_combobox['values'] = (
+            "Pínch Vertical",
+            "Pinch nas Bordas",
+            "Warping Baseado em Campo"
+        )
+        self.opr_warp_pinch_combobox.pack()
+        self.opr_warp_pinch_combobox.place(x=200, y=480)
+        self.opr_warp_pinch_combobox.bind("<<ComboboxSelected>>", self.show_value_input)
+        # Crie um rótulo para a palavra "Quantidade"
+        label = tk.Label(self, text="Quantidade")
+        label.pack()
+        label.place(x=350, y=480)
+        #Label de Valor de entrada para Amount
+        self.amountWarpingPinch_entry = tk.Entry(self)
+        self.amountWarpingPinch_entry.pack()
+        self.amountWarpingPinch_entry.place(x=430, y=480)
+        # Adicione o botão Processar
+        self.warpingPinch_button = tk.Button(self, text="Processar", command=self.warpingPinch_operation)
+        self.warpingPinch_button.pack()
+        self.warpingPinch_button.place(x=560, y=480)
+
+
+
+
+
+
+
+
+
+
+
+
+###COMEÇA FUNÇOES DE CONTROLE AQUI############################################################
+    def warpingPinch_operation(self):
+        opr = str(self.selected_opr_pinch_warp.get())
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
+        output_path = "luminaprocessing/resultado.png"
+
+        if opr == "Pínch Vertical":
+            amount = int(self.amountWarpingPinch_entry.get())
+            vertical_pinch(imageInput, amount, output_path)
+        if opr == "Pinch nas Bordas":
+            amount = float(self.amountWarpingPinch_entry.get())
+            edge_pinch(imageInput, amount, output_path)
+        if opr == "Warping Baseado em Campo":
+            amount = int(self.amountWarpingPinch_entry.get())
+            rows, cols = imageInput.shape[:2]
+            field = [[[0, 0] for _ in range(cols)] for _ in range(rows)]
+            center_x, center_y = cols / 2, rows / 2
+            for i in range(rows):
+                for j in range(cols):
+                    distance_to_center = np.sqrt((center_x - j) ** 2 + (center_y - i) ** 2)
+                    scale = (1 - distance_to_center / max(center_x, center_y)) * amount
+                    field[i][j] = [scale * (center_x - j), scale * (center_y - i)]
+            field_based_warping(imageInput, field, output_path)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
+
+    def rota_operation2(self):
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
+        angle = int(self.rot_entry.get())
+        output_path = "luminaprocessing/resultado.png"
+        rotate_image2(imageInput, angle, output_path, center=None, scale=1.0)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
+    def rota_operation(self):
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
+        angle = int(self.rot_entry.get())
+        output_path = "luminaprocessing/resultado.png"
+        rotate_image(imageInput, angle, output_path, center=None, scale=1.0)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
+    def invert_operation(self):
+        output_path = self.imagepath
+        operation = str(self.selOPR.get())
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
+        if operation == "iv":
+            reflect_image(imageInput, 1, output_path)
+
+        if operation == "ih":
+            reflect_image(imageInput, 0, output_path)
+
+
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
 
     def reso_operation(self, event):
         operation = self.operationReso.get()
