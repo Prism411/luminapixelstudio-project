@@ -10,7 +10,8 @@ from PIL import ImageTk, Image
 from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redimensionar_imagem, negativo, \
     alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, scale_image, shear_image, \
     realce_contraste_adaptativo, histogram_equalization, expand_histogram_auto, reflect_image, rotate_image, \
-    rotate_image2, field_based_warping, edge_pinch, vertical_pinch, aplicar_filtro_media, aplicar_filtro_mediana
+    rotate_image2, field_based_warping, edge_pinch, vertical_pinch, aplicar_filtro_media, aplicar_filtro_mediana, \
+    aplicar_sobel, agucamento_bordas, high_boost, convolucao_com_offset
 
 
 class ImageDisplayWindow(tk.Toplevel):
@@ -293,17 +294,163 @@ class ImageDisplayWindow(tk.Toplevel):
         label = tk.Label(self, text="Mediana é Intensiva de CPU, Cuidado!", fg="red")
         label.pack()
         label.place(x=670, y=510)
-        #Fim da Media e Mediana
+        #Fim da Media e Mediana#############################
+
+        ##Comeco da Deteccao de bordas############################
+        self.sobel_button = tk.Button(self, text="Gradiente de Sobel;", command=self.sobel_operation)
+        self.sobel_button.pack()
+        self.sobel_button.place(x=200, y=540)
+        ##Fim da Deteccao de Bordas#########################################
+        ##Agucamento de bordas#############################################
+        self.agcBordas_button = tk.Button(self, text="Aguçamento de Bordas;", command=self.algc_operation)
+        self.agcBordas_button.pack()
+        self.agcBordas_button.place(x=320, y=540)
+        ##Fim do agucamento de bordas#############################################
+        ##High Boost#######################################################################
+        # Crie um rótulo para a palavra "Tamanho do Kernel"
+        label = tk.Label(self, text="Valor de K:")
+        label.pack()
+        label.place(x=550, y=540)
+        # Label de Valor de entrada para HighBoost
+        self.high_boost_entry = tk.Entry(self)
+        self.high_boost_entry.pack()
+        self.high_boost_entry.place(x=620, y=540)
+        # Botao de entrada para HighBoost
+        self.highboost_button = tk.Button(self, text="Processar HighBoost", command=self.highboost_operation)
+        self.highboost_button.pack()
+        self.highboost_button.place(x=750, y=540)
+
+        # Botao de entrada para Inserir Matriz HxN
+        self.filter_button = tk.Button(self, text="Inserir Matriz H (N x M)", command=self.inserir_matriz)
+        self.filter_button.pack()
+        self.filter_button.place(x=200, y=570)
+
+        # Crie um rótulo para a palavra "OFFSET"
+        label = tk.Label(self, text="Valor de OffSet:")
+        label.pack()
+        label.place(x=350, y=570)
+
+        # Label de Valor de entrada para OFFSET
+        self.offset_entry = tk.Entry(self)
+        self.offset_entry.pack()
+        self.offset_entry.place(x=450, y=570)
+        self.matriz = None
+
+        # Botao de entrada para processar
+        self.convo_button = tk.Button(self, text="Processar Convolução", command=self.convo_operation)
+        self.convo_button.pack()
+        self.convo_button.place(x=580, y=570)
 
 
 
 
 
-
-
-
-
+    def convo_operation(self):
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte  de RGB para BGR
+        output_path = "luminaprocessing/resultado.png"
+        kernel = np.array(self.matriz)
+        offset = int(self.offset_entry.get())
+        convolucao_com_offset(imageInput, kernel, offset, output_path)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
 ###COMEÇA FUNÇOES DE CONTROLE AQUI############################################################
+    def inserir_matriz(self):
+        # Criar uma nova janela
+        self.janela_matriz = tk.Toplevel(self)
+        self.janela_matriz.title("Inserir Matriz")
+
+        # Entradas para as dimensões da matriz (n x m)
+        self.entrada_n = tk.Entry(self.janela_matriz, width=5)
+        self.entrada_n.grid(row=0, column=1)
+        self.entrada_m = tk.Entry(self.janela_matriz, width=5)
+        self.entrada_m.grid(row=1, column=1)
+
+        tk.Label(self.janela_matriz, text="Linhas (n):").grid(row=0, column=0)
+        tk.Label(self.janela_matriz, text="Colunas (m):").grid(row=1, column=0)
+
+        # Botão para criar as entradas da matriz
+        botao_criar = tk.Button(self.janela_matriz, text="Criar Matriz", command=self.criar_campos_matriz)
+        botao_criar.grid(row=2, column=1)
+
+        # Lista para armazenar as entradas (widgets Entry)
+        self.entradas_matriz = []
+
+    def criar_campos_matriz(self):
+        # Limpando entradas anteriores
+        for linha in self.entradas_matriz:
+            for entrada in linha:
+                entrada.destroy()
+        self.entradas_matriz.clear()
+
+        try:
+            n = int(self.entrada_n.get())
+            m = int(self.entrada_m.get())
+        except ValueError:
+            print("Por favor, insira números inteiros para as dimensões.")
+            return
+
+        # Criando campos de entrada para a matriz
+        for i in range(n):
+            linha = []
+            for j in range(m):
+                entrada = tk.Entry(self.janela_matriz, width=5)
+                entrada.grid(row=i + 3, column=j)
+                linha.append(entrada)
+            self.entradas_matriz.append(linha)
+
+        # Botão para obter os valores da matriz
+        botao_obter = tk.Button(self.janela_matriz, text="Obter Matriz", command=self.obter_valores_matriz)
+        botao_obter.grid(row=n + 3, columnspan=m)
+
+    def obter_valores_matriz(self):
+        try:
+            self.matriz = [[float(entrada.get()) for entrada in linha] for linha in self.entradas_matriz]
+            print("Matriz:", self.matriz)
+        except ValueError:
+            print("Por favor, insira apenas números.")
+            self.matriz = None
+
+    def highboost_operation(self):
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte  de RGB para BGR
+        output_path = "luminaprocessing/resultado.png"
+        k = int(self.high_boost_entry.get())
+        if k >= 256:
+            k = 255
+        high_boost(imageInput, k, output_path)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
+    def algc_operation(self):
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte  de RGB para BGR
+        output_path = "luminaprocessing/resultado.png"
+        agucamento_bordas(imageInput, output_path)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
+    def sobel_operation(self):
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte  de RGB para BGR
+        output_path = "luminaprocessing/resultado.png"
+        aplicar_sobel(imageInput, output_path)
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
     def filter_operation(self):
         opr = str(self.selected_filter.get())
         imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original

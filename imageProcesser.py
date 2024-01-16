@@ -431,3 +431,60 @@ def aplicar_sobel(imagem, output_path):
     cv2.imwrite(output_path, magnitude)
 
     return magnitude
+
+def agucamento_bordas(imagem, output_path):
+    # Aplicando um filtro Laplaciano para detecção de bordas
+    kernel_laplaciano = np.array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]])
+    bordas = cv2.filter2D(imagem, -1, kernel_laplaciano)
+
+    # Adicionando as bordas detectadas de volta à imagem original
+    imagem_agucada = cv2.add(imagem, bordas)
+
+    # Salvando a imagem resultante
+    cv2.imwrite(output_path, imagem_agucada)
+
+    return imagem_agucada
+
+def high_boost(imagem, k, output_path):
+    # Aplicando um filtro Laplaciano para detecção de bordas
+    kernel_laplaciano = np.array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]])
+    bordas = cv2.filter2D(imagem, -1, kernel_laplaciano)
+
+    # Multiplicando as bordas por um fator k e adicionando à imagem original
+    imagem_boosted = cv2.add(imagem, k * bordas)
+
+    # Salvando a imagem resultante
+    cv2.imwrite(output_path, imagem_boosted)
+
+    return imagem_boosted
+
+def convolucao_com_offset(imagem, kernel, offset, output_path):
+    # Converte a imagem para escala de cinza para simplificar a convolução.
+    imagem_gray = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
+    k_altura, k_largura = kernel.shape
+    pad_altura = (k_altura - 1) // 2
+    pad_largura = (k_largura - 1) // 2
+
+    # Aplica padding na imagem em escala de cinza
+    imagem_padded = np.pad(imagem_gray, [(pad_altura, pad_altura), (pad_largura, pad_largura)], mode='constant', constant_values=0)
+
+    # Inicializa a imagem de saída
+    altura, largura = imagem_gray.shape
+    imagem_saida = np.zeros_like(imagem_gray)
+
+    # Aplica a operação de convolução
+    for i in range(altura):
+        for j in range(largura):
+            # Extrai a região de interesse
+            regiao = imagem_padded[i:i+k_altura, j:j+k_largura]
+            # Aplica a convolução (elemento a elemento)
+            conv_sum = np.sum(kernel * regiao)
+            imagem_saida[i, j] = conv_sum + offset
+
+    # Garante que os valores da imagem estão dentro dos limites [0, 255]
+    imagem_saida = np.clip(imagem_saida, 0, 255).astype(np.uint8)
+
+    # Salva a imagem resultante
+    cv2.imwrite(output_path, imagem_saida)
+
+    return imagem_saida
