@@ -1,7 +1,7 @@
 import os
 import shutil
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, messagebox
 
 import cv2
 import numpy as np
@@ -390,8 +390,13 @@ class ImageDisplayWindow(tk.Toplevel):
         try:
             n = int(self.entrada_n.get())
             m = int(self.entrada_m.get())
+            max_altura, max_largura = 3, 3  #
+            if n > max_altura or m > max_largura:
+                messagebox.showwarning("Tamanho Inválido",
+                                       f"O tamanho do kernel deve ser no máximo {max_altura}x{max_largura}.")
+                return
         except ValueError:
-            print("Por favor, insira números inteiros para as dimensões.")
+            messagebox.showerror("Entrada Inválida", "Por favor, insira números inteiros para as dimensões.")
             return
 
         # Criando campos de entrada para a matriz
