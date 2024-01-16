@@ -10,7 +10,7 @@ from PIL import ImageTk, Image
 from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redimensionar_imagem, negativo, \
     alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, scale_image, shear_image, \
     realce_contraste_adaptativo, histogram_equalization, expand_histogram_auto, reflect_image, rotate_image, \
-    rotate_image2, field_based_warping, edge_pinch, vertical_pinch
+    rotate_image2, field_based_warping, edge_pinch, vertical_pinch, aplicar_filtro_media, aplicar_filtro_mediana
 
 
 class ImageDisplayWindow(tk.Toplevel):
@@ -239,7 +239,7 @@ class ImageDisplayWindow(tk.Toplevel):
         #######começo Warping e Pinch##############################################
         # Variável para rastrear a escolha do usuário
         self.selected_opr_pinch_warp = tk.StringVar()
-        self.selected_operation.set("Escolha Warp/Pinch!")
+        self.selected_opr_pinch_warp.set("Escolha Warp/Pinch!")
         # Combobox para selecionar uma operação
         self.opr_warp_pinch_combobox = ttk.Combobox(self, textvariable=self.selected_opr_pinch_warp)
         self.opr_warp_pinch_combobox['values'] = (
@@ -262,9 +262,38 @@ class ImageDisplayWindow(tk.Toplevel):
         self.warpingPinch_button = tk.Button(self, text="Processar", command=self.warpingPinch_operation)
         self.warpingPinch_button.pack()
         self.warpingPinch_button.place(x=560, y=480)
+        #FIM DO WARPING E DO PINCH##########################################
 
 
-
+        ##COMEÇO DA FILTRAGEM LINEAR EN NAO LINEAR MEDIA E MEDIANA######################
+        # Variável para rastrear a escolha do usuário
+        self.selected_filter = tk.StringVar()
+        self.selected_filter.set("Escolha tipo de Filtro!")
+        # Combobox para selecionar uma operação
+        self.opr_warp_pinch_combobox = ttk.Combobox(self, textvariable= self.selected_filter)
+        self.opr_warp_pinch_combobox['values'] = (
+            "Filtro Media",
+            "Filtro Mediana",
+        )
+        self.opr_warp_pinch_combobox.pack()
+        self.opr_warp_pinch_combobox.place(x=200, y=510)
+        # Crie um rótulo para a palavra "Tamanho do Kernel"
+        label = tk.Label(self, text="Tamanho do Kernel")
+        label.pack()
+        label.place(x=350, y=510)
+        #Label de Valor de entrada para KernelSize
+        self.kernel_entry = tk.Entry(self)
+        self.kernel_entry.pack()
+        self.kernel_entry.place(x=470, y=510)
+        # botao para realizar a operacao em si
+        self.filter_button = tk.Button(self, text="Processar", command=self.filter_operation)
+        self.filter_button.pack()
+        self.filter_button.place(x=600, y=510)
+        # Crie um rótulo para o aviso de perigo
+        label = tk.Label(self, text="Mediana é Intensiva de CPU, Cuidado!", fg="red")
+        label.pack()
+        label.place(x=670, y=510)
+        #Fim da Media e Mediana
 
 
 
@@ -275,6 +304,25 @@ class ImageDisplayWindow(tk.Toplevel):
 
 
 ###COMEÇA FUNÇOES DE CONTROLE AQUI############################################################
+    def filter_operation(self):
+        opr = str(self.selected_filter.get())
+        imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
+        imageInput = np.array(imagePIL)  # Converte para array do NumPy
+        imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
+        output_path = "luminaprocessing/resultado.png"
+        kernel_size = int(self.kernel_entry.get())
+        if opr == "Filtro Media":
+            aplicar_filtro_media(imageInput, kernel_size, output_path)
+            pass
+        if opr == "Filtro Mediana":
+            aplicar_filtro_mediana(imageInput, kernel_size,output_path)
+            pass
+        self.selected_image = Image.open(output_path)
+        self.selected_image = self.selected_image.resize((256, 256))
+        self.selected_image = ImageTk.PhotoImage(self.selected_image)
+        self.selected_image_label.config(image=self.selected_image)
+        self.selected_image_label.image = self.selected_image  # Mantenha uma referência
+
     def warpingPinch_operation(self):
         opr = str(self.selected_opr_pinch_warp.get())
         imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original

@@ -370,17 +370,64 @@ def field_based_warping(image, field, output_path):
     cv2.imwrite(output_path, warped_image)
     return warped_image
 
+def aplicar_filtro_mediana(imagem, kernel_size, output_path):
+    pad_size = kernel_size // 2
+    altura, largura, canais = imagem.shape
+    imagem_padded = np.pad(imagem, [(pad_size, pad_size), (pad_size, pad_size), (0, 0)], mode='edge')
+    imagem_filtrada = np.zeros_like(imagem)
+
+    # Preparando janelas para cada pixel
+    janelas = np.lib.stride_tricks.as_strided(
+        imagem_padded,
+        shape=(altura, largura, kernel_size, kernel_size, canais),
+        strides=imagem_padded.strides[:2] + imagem_padded.strides[:2] + imagem_padded.strides[2:]
+    )
+
+    # Calculando a mediana em todas as janelas de uma só vez
+    medianas = np.median(janelas, axis=(2, 3))
+
+    # Atribuindo os valores de mediana à imagem filtrada
+    imagem_filtrada[:, :, :] = medianas
+
+    cv2.imwrite(output_path, imagem_filtrada)
+    return imagem_filtrada
 
 
+def aplicar_filtro_media(imagem, kernel_size, output_path):
+    kernel = np.ones((kernel_size, kernel_size), dtype=float) / (kernel_size**2)
+    imagem_filtrada = np.zeros_like(imagem)
 
-# Note que para a função field_based_warping, você precisará fornecer um 'campo' apropriado,
-# que é um array de vetores indicando como cada pixel deve ser movido.
-def plot_histogram(image):
-    hist, bins = np.histogram(image, bins=256, range=(0, 256))
-    plt.figure()
-    plt.title("Histogram")
-    plt.xlabel("Pixel Value")
-    plt.ylabel("Frequency")
-    plt.plot(hist, color="black")
-    plt.xlim([0, 256])
-    plt.show()
+    for canal in range(imagem.shape[2]):
+        imagem_filtrada[:, :, canal] = cv2.filter2D(imagem[:, :, canal], -1, kernel)
+
+    cv2.imwrite(output_path, imagem_filtrada)
+    return imagem_filtrada
+
+def aplicar_sobel(imagem, output_path):
+    # Converter para escala de cinza se for uma imagem colorida
+    if imagem.ndim == 3:
+        imagem = np.dot(imagem[...,:3], [0.2989, 0.5870, 0.1140])
+
+    # Definindo os kernels de Sobel
+    sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+    sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+
+    # Inicializando as matrizes de gradiente
+    grad_x = np.zeros_like(imagem)
+    grad_y = np.zeros_like(imagem)
+
+    # Aplicando os kernels de Sobel
+    for i in range(1, imagem.shape[0] - 1):
+        for j in range(1, imagem.shape[1] - 1):
+            regiao = imagem[i-1:i+2, j-1:j+2]
+            grad_x[i, j] = np.sum(sobel_x * regiao)
+            grad_y[i, j] = np.sum(sobel_y * regiao)
+
+    # Calculando a magnitude do gradiente
+    magnitude = np.sqrt(grad_x**2 + grad_y**2)
+    magnitude = np.uint8(magnitude / np.max(magnitude) * 255)
+
+    # Salvando a imagem resultante com OpenCV
+    cv2.imwrite(output_path, magnitude)
+
+    return magnitude
