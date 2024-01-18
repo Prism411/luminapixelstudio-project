@@ -6,7 +6,7 @@ from tkinter import filedialog, ttk, messagebox
 import cv2
 import numpy as np
 from PIL import ImageTk, Image
-
+import customtkinter
 from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redimensionar_imagem, negativo, \
     alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, scale_image, \
     realce_contraste_adaptativo, histogram_equalization, expand_histogram_auto, reflect_image, rotate_image, \
@@ -14,10 +14,16 @@ from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redi
     aplicar_sobel, agucamento_bordas, high_boost, convolucao_com_offset, shear_image
 
 
-class ImageDisplayWindow(tk.Toplevel):
+class ImageDisplayWindow(customtkinter.CTkToplevel):
 
     def __init__(self, parent, imagepath, image):
+
         super().__init__(parent)
+
+        # Definir o modo de aparência e o tema de cor
+        customtkinter.set_appearance_mode("dark")  # Outras opções: "light", "System"
+        customtkinter.set_default_color_theme("dark-blue")  # Outras opções de temas disponíveis na documentação
+
         self.imagepath = imagepath
         self.title("Imagem Selecionada")
         self.geometry("920x720")  # Tamanho da nova janela

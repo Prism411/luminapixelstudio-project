@@ -5,12 +5,12 @@ from tkinter import ttk, filedialog, simpledialog
 from PIL import Image, ImageTk
 
 from imageDisplayWindow import ImageDisplayWindow
+from processerWindow import ProcesserWindow
 
 
 class MainMenu(tk.Tk):
     def __init__(self):
         super().__init__()
-
         self.title("LuminaPixel Studio")
         self.geometry("800x600")  # Defina o tamanho da janela como 800x600
         self.resizable(False, False)  # Bloqueie a capacidade de redimensionar a janela
@@ -77,8 +77,12 @@ class MainMenu(tk.Tk):
             print(f"Imagem copiada para: {new_filename}")
     def show_selected_image(self,file_path):
         if self.selected_image:
-            # Abra uma nova janela para exibir a imagem centralizada
-            image_window = ImageDisplayWindow(self,file_path, image=self.selected_image)
+            # Keep a reference to the PhotoImage object to prevent garbage collection.
+            self.processed_image = ImageTk.PhotoImage(Image.open(file_path))
+            # Open a new window to display the centered image
+            image_window = ImageDisplayWindow(self, file_path, image=self.processed_image)
+            #p = ProcesserWindow(self,file_path,image = self.processed_image)
+           # p.start()
             image_window.grab_set()
     def process_images(self):
         # Implemente a lógica para processamento de imagens aqui

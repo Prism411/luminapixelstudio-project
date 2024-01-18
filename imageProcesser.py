@@ -260,15 +260,14 @@ def reflect_image(image, axis, output_path):
     height = len(image)
     width = len(image[0]) if height > 0 else 0
 
-    reflected_image = []
-
     # Refletir a imagem
     if axis == 0:  # Reflexão horizontal
-        for row in image:
-            reflected_row = row[::-1]
-            reflected_image.append(reflected_row)
+        reflected_image = [row[::-1] for row in image]  # Compreensão de lista
     elif axis == 1:  # Reflexão vertical
-        reflected_image = image[::-1]
+        # Criar uma lista com espaço para cada linha
+        reflected_image = [None] * height
+        for i in range(height):
+            reflected_image[i] = image[height - 1 - i]
 
     # Converter para um array do NumPy
     np_image = np.array(reflected_image, dtype=np.uint8)
@@ -276,7 +275,7 @@ def reflect_image(image, axis, output_path):
     # Salvar a imagem
     cv2.imwrite(output_path, np_image)
 
-    return reflected_image
+    return np_image
 
 
 # Função para rotação (rotation)
@@ -554,8 +553,8 @@ def agucamento_bordas(imagem, output_path):
 
 def high_boost(imagem, k, output_path):
     imagem_gray = converter_para_cinza(imagem)
-    altura, largura = imagem_gray.shape
-    imagem_boosted = np.zeros_like(imagem_gray)
+    altura, largura = len(imagem_gray), len(imagem_gray[0])
+    imagem_boosted = [[0 for _ in range(largura)] for _ in range(altura)]
 
     # Kernel Laplaciano
     kernel_laplaciano = [[0, -1, 0], [-1, 4, -1], [0, -1, 0]]
@@ -565,44 +564,50 @@ def high_boost(imagem, k, output_path):
             soma_laplaciana = 0
             for ki in range(-1, 2):
                 for kj in range(-1, 2):
-                    soma_laplaciana += imagem_gray[i + ki, j + kj] * kernel_laplaciano[ki + 1][kj + 1]
+                    soma_laplaciana += imagem_gray[i + ki][j + kj] * kernel_laplaciano[ki + 1][kj + 1]
 
             # Aplicar o high boost
-            valor_boosted = imagem_gray[i, j] + k * soma_laplaciana
-            imagem_boosted[i, j] = np.clip(valor_boosted, 0, 255)
+            valor_boosted = imagem_gray[i][j] + k * soma_laplaciana
 
-    Image.fromarray(imagem_boosted).save(output_path)
-    return imagem_boosted
+            # Verificar os limites e ajustar se necessário
+            if valor_boosted < 0:
+                valor_boosted = 0
+            elif valor_boosted > 255:
+                valor_boosted = 255
+
+            imagem_boosted[i][j] = valor_boosted
+
+    # Convertendo de volta para o array do NumPy para salvar a imagem
+    imagem_boosted_np = np.array(imagem_boosted, dtype=np.uint8)
+    Image.fromarray(imagem_boosted_np).save(output_path)
+    return imagem_boosted_np
 
 
 def convolucao_com_offset(imagem, kernel, offset, output_path):
     # Converte a imagem para escala de cinza para simplificar a convolução.
-    imagem_gray = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
-    k_altura, k_largura = kernel.shape
-    pad_altura = (k_altura - 1) // 2
-    pad_largura = (k_largura - 1) // 2
-
-    # Aplica padding na imagem em escala de cinza
-    imagem_padded = np.pad(imagem_gray, [(pad_altura, pad_altura), (pad_largura, pad_largura)], mode='constant',
-                           constant_values=0)
+    imagem_gray = converter_para_cinza(imagem)
+    k_altura, k_largura = len(kernel), len(kernel[0])
+    pad_altura, pad_largura = k_altura // 2, k_largura // 2
 
     # Inicializa a imagem de saída
-    altura, largura = imagem_gray.shape
-    imagem_saida = np.zeros_like(imagem_gray)
+    altura, largura = len(imagem_gray), len(imagem_gray[0])
+    imagem_saida = [[0] * largura for _ in range(altura)]
 
     # Aplica a operação de convolução
-    for i in range(altura):
-        for j in range(largura):
-            # Extrai a região de interesse
-            regiao = imagem_padded[i:i + k_altura, j:j + k_largura]
-            # Aplica a convolução (elemento a elemento)
-            conv_sum = np.sum(kernel * regiao)
-            imagem_saida[i, j] = conv_sum + offset
+    for i in range(pad_altura, altura - pad_altura):
+        for j in range(pad_largura, largura - pad_largura):
+            conv_sum = 0
+            for m in range(k_altura):
+                for n in range(k_largura):
+                    conv_sum += (imagem_gray[i + m - pad_altura][j + n - pad_largura] *
+                                 kernel[m][n])
+            conv_sum += offset
+            # Garante que os valores da imagem estão dentro dos limites [0, 255]
+            conv_sum = max(min(conv_sum, 255), 0)
+            imagem_saida[i][j] = conv_sum
 
-    # Garante que os valores da imagem estão dentro dos limites [0, 255]
-    imagem_saida = np.clip(imagem_saida, 0, 255).astype(np.uint8)
+    # Convertendo de volta para o array do NumPy para salvar a imagem
+    imagem_saida_np = np.array(imagem_saida, dtype=np.uint8)
+    Image.fromarray(imagem_saida_np).save(output_path)
 
-    # Salva a imagem resultante
-    cv2.imwrite(output_path, imagem_saida)
-
-    return imagem_saida
+    return imagem_saida_np
