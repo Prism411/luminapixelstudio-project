@@ -1,8 +1,12 @@
+import math
+
 from PIL import Image
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 from scipy.ndimage import generic_filter
+
+
 def redimensionar_imagem(image_path, novo_tamanho):
     # Abra a imagem
     imagem = Image.open(image_path)
@@ -11,7 +15,9 @@ def redimensionar_imagem(image_path, novo_tamanho):
     imagem_redimensionada = imagem.resize(novo_tamanho)
 
     return imagem_redimensionada
-def dissolve_cruzado(image_path1, image_path2, output_path,alpha):
+
+
+def dissolve_cruzado(image_path1, image_path2, output_path, alpha):
     # Redimensione as imagens para terem o mesmo tamanho
     novo_tamanho = (800, 600)  # Substitua pelo tamanho desejado
     image1 = redimensionar_imagem(image_path1, novo_tamanho)
@@ -34,6 +40,7 @@ def dissolve_cruzado(image_path1, image_path2, output_path,alpha):
 
     # Salve a imagem resultante
     output_image.save(output_path)
+
 
 def dissolve_cruzado_nao_uniforme(image_path1, image_path2, output_path, alpha):
     # Redimensione as imagens para terem o mesmo tamanho
@@ -44,7 +51,6 @@ def dissolve_cruzado_nao_uniforme(image_path1, image_path2, output_path, alpha):
     # Crie uma imagem de saída com o mesmo tamanho das imagens de entrada
     output_image = Image.new("RGB", image1.size)
 
-
     # Itere através de cada pixel e aplique a operação de Dissolve Cruzado uniforme
     for x in range(image1.width):
         for y in range(image1.height):
@@ -60,32 +66,40 @@ def dissolve_cruzado_nao_uniforme(image_path1, image_path2, output_path, alpha):
     # Salve a imagem resultante
     output_image.save(output_path)
 
+
 def negativo(image_path, output_path):
     image = Image.open(image_path)
     negative_image = Image.eval(image, lambda x: 255 - x)
     negative_image.save(output_path)
 
+
 def alargamento_contraste(image_path, output_path):
     image = Image.open(image_path)
-    contrast_stretched = Image.eval(image, lambda x: (x - 100) * 255 / (200 - 100) if 100 <= x <= 200 else 0 if x < 100 else 255)
+    contrast_stretched = Image.eval(image, lambda x: (x - 100) * 255 / (
+                200 - 100) if 100 <= x <= 200 else 0 if x < 100 else 255)
     contrast_stretched.save(output_path)
+
 
 def limiarizacao(image_path, output_path, threshold):
     image = Image.open(image_path)
     thresholded = Image.eval(image, lambda x: 0 if x < threshold else 255)
     thresholded.save(output_path)
 
+
 def transformacao_potencia(image_path, output_path, gamma):
     image = Image.open(image_path)
     gamma_corrected = Image.eval(image, lambda x: int(255 * (x / 255) ** gamma))
     gamma_corrected.save(output_path)
+
 
 def transformacao_logaritmica(image_path, output_path, c):
     image = Image.open(image_path)
     log_transformed = Image.eval(image, lambda x: int(c * np.log(1 + x)))
     log_transformed.save(output_path)
 
+
 import matplotlib.pyplot as plt
+
 
 def expand_histogram_auto(image, gain, output_path, show_histogram):
     # Aplica a expansão do histograma de forma automática
@@ -102,7 +116,6 @@ def expand_histogram_auto(image, gain, output_path, show_histogram):
         plt.show()
 
     return expanded_image
-
 
 
 def histogram_equalization(image, output_path, show_histogram):
@@ -129,6 +142,7 @@ def histogram_equalization(image, output_path, show_histogram):
 
 
 #####################################################################################################################
+
 def converter_para_cinza(imagem):
     altura, largura = len(imagem), len(imagem[0])
     imagem_cinza = [[0 for _ in range(largura)] for _ in range(altura)]
@@ -139,15 +153,21 @@ def converter_para_cinza(imagem):
             cinza = int(0.299 * vermelho + 0.587 * verde + 0.114 * azul)
             imagem_cinza[i][j] = cinza
 
-    return imagem_cinza
+    # Convertendo a lista de listas para um array do NumPy
+    imagem_cinza_np = np.array(imagem_cinza, dtype=np.uint8)
+    return imagem_cinza_np
+
+
 
 def calcular_media(bairro):
     soma = sum(bairro)
     return soma / len(bairro)
 
+
 def calcular_desvio_padrao(bairro, media):
     soma_diferencas_quadradas = sum((x - media) ** 2 for x in bairro)
     return (soma_diferencas_quadradas / len(bairro)) ** 0.5
+
 
 def aplicar_kernel(imagem, tamanho_kernel, funcao_filtro):
     altura, largura = len(imagem), len(imagem[0])
@@ -161,6 +181,7 @@ def aplicar_kernel(imagem, tamanho_kernel, funcao_filtro):
             imagem_saida[i][j] = funcao_filtro(bairro)
 
     return imagem_saida
+
 
 def realce_contraste_adaptativo(imagem, c, tamanho_kernel):
     def funcao_filtro(bairro):
@@ -180,8 +201,8 @@ def realce_contraste_adaptativo(imagem, c, tamanho_kernel):
     imagem_processada = aplicar_kernel(imagem_cinza, tamanho_kernel, funcao_filtro)
     return imagem_processada
 
-#######################################################################################################
 
+#######################################################################################################
 
 
 # Função para mudança de escala (scaling)
@@ -196,19 +217,44 @@ def scale_image(image, scale_x, scale_y, output_path):
     cv2.imwrite(output_path, scaled_image)
     return scaled_image
 
+
+import numpy as np
+from PIL import Image
+import os
+
+
 def shear_image(image, shear_x, shear_y, output_path):
+    print("entrou na shear Image")
     rows, cols = image.shape[:2]
+    sheared_image = np.zeros_like(image)
 
-    # Matriz de transformação para cisalhamento
-    M = np.float32([[1, shear_x, 0],
-                    [shear_y, 1, 0],
-                    [0, 0, 1]])
+    for i in range(rows):
+        for j in range(cols):
+            new_x = j + shear_x * i
+            new_y = i + shear_y * j
+            if 0 <= new_x < cols and 0 <= new_y < rows:
+                sheared_image[int(new_y), int(new_x)] = image[i, j]
 
-    # Aplicando a transformação
-    sheared_image = cv2.warpPerspective(image, M, (cols, rows))
-    cv2.imwrite(output_path, sheared_image)  # Salvando a imagem transformada
+    # Convertendo para o tipo de dados correto, se necessário
+    sheared_image = sheared_image.astype(np.uint8)
+
+    # Verifique se o diretório existe, se não, crie-o
+    if not os.path.exists(os.path.dirname(output_path)):
+        os.makedirs(os.path.dirname(output_path))
+
+    # Tente salvar a imagem
+    try:
+        Image.fromarray(sheared_image).save(output_path)
+        cv2.imwrite(output_path, sheared_image)
+        print(f"Imagem salva com sucesso em: {output_path}")
+    except Exception as e:
+        print(f"Erro ao salvar a imagem: {e}")
+    print("teste")
     return sheared_image
-##############################################################################################
+
+
+# Restante do seu código...
+
 
 def reflect_image(image, axis, output_path):
     height = len(image)
@@ -232,24 +278,23 @@ def reflect_image(image, axis, output_path):
 
     return reflected_image
 
+
 # Função para rotação (rotation)
-def bilinear_interpolate(image, x, y):
-    x1, y1 = int(x), int(y)
-    x2, y2 = min(x1 + 1, image.shape[1] - 1), min(y1 + 1, image.shape[0] - 1)
+def bilinear_interpolate(im, x, y):
+    x0, y0 = int(x), int(y)
+    x1, y1 = min(x0 + 1, im.shape[1] - 1), min(y0 + 1, im.shape[0] - 1)
 
-    A = image[y1, x1]
-    B = image[y1, x2]
-    C = image[y2, x1]
-    D = image[y2, x2]
+    # Calculando os coeficientes
+    a = x - x0
+    b = y - y0
 
-    wa = (x2 - x) * (y2 - y)
-    wb = (x - x1) * (y2 - y)
-    wc = (x2 - x) * (y - y1)
-    wd = (x - x1) * (y - y1)
+    # Interpolação
+    return (im[y0, x0] * (1 - a) * (1 - b) + im[y0, x1] * a * (1 - b) +
+            im[y1, x0] * (1 - a) * b + im[y1, x1] * a * b)
 
-    return wa*A + wb*B + wc*C + wd*D
 def rotate_image2(image, angle, output_path, center=None, scale=1.0):
-    (h, w) = image.shape[:2]
+    image = converter_para_cinza(image)  # Converte para escala de cinza
+    h, w = image.shape[:2]
 
     # Se nenhum centro for fornecido, usa o centro da imagem
     if center is None:
@@ -257,50 +302,59 @@ def rotate_image2(image, angle, output_path, center=None, scale=1.0):
     else:
         center_x, center_y = center
 
-    # Matriz de rotação
-    M = cv2.getRotationMatrix2D((center_x, center_y), angle, scale)
+    # Convertendo o ângulo em radianos
+    angle_rad = math.radians(angle)
 
-    # Cria uma nova imagem com o mesmo tamanho da original
+    # Criando a imagem rotacionada
     rotated_image = np.zeros_like(image)
 
     for y in range(h):
         for x in range(w):
-            # Aplicar a transformação de rotação para cada pixel
-            new_x = (M[0, 0] * x + M[0, 1] * y + M[0, 2])
-            new_y = (M[1, 0] * x + M[1, 1] * y + M[1, 2])
+            # Calculando as novas coordenadas com base no centro e no ângulo
+            new_x = (x - center_x) * math.cos(angle_rad) + (y - center_y) * math.sin(angle_rad) + center_x
+            new_y = -(x - center_x) * math.sin(angle_rad) + (y - center_y) * math.cos(angle_rad) + center_y
 
-            ## Verifica se as novas coordenadas estão dentro dos limites da nova imagem
-            if 0 <= new_x < w - 1 and 0 <= new_y < h - 1:
+            # Verificando se as novas coordenadas estão dentro dos limites da imagem original
+            if 0 <= new_x < w and 0 <= new_y < h:
                 rotated_image[y, x] = bilinear_interpolate(image, new_x, new_y)
-    cv2.imwrite(output_path, rotated_image)
+
+    # Salvando a imagem rotacionada
+    Image.fromarray(rotated_image).save(output_path)
     return rotated_image
 
-def rotate_image(image, angle,output_path, center=None, scale=1.0):
-    (h, w) = image.shape[:2]
-
+def rotate_image(image, angle, output_path, center=None, scale=1.0):
+    h, w = image.shape[:2]
+    image = converter_para_cinza(image)
     # Se nenhum centro for fornecido, usa o centro da imagem
     if center is None:
         center_x, center_y = w // 2, h // 2
     else:
         center_x, center_y = center
 
-    # Matriz de rotação
-    M = cv2.getRotationMatrix2D((center_x, center_y), angle, scale)
+    # Convertendo o ângulo em radianos
+    angle_rad = math.radians(angle)
 
-    # Cria uma nova imagem com o mesmo tamanho da original
+    # Calculando os componentes da matriz de rotação
+    cos_a = math.cos(angle_rad) * scale
+    sin_a = math.sin(angle_rad) * scale
+
+    # Criando a nova imagem
     rotated_image = np.zeros_like(image)
 
     for y in range(h):
         for x in range(w):
-            # Aplicar a transformação de rotação para cada pixel
-            new_x = (M[0, 0] * x + M[0, 1] * y + M[0, 2])
-            new_y = (M[1, 0] * x + M[1, 1] * y + M[1, 2])
+            # Aplicando a transformação de rotação para cada pixel
+            new_x = cos_a * (x - center_x) - sin_a * (y - center_y) + center_x
+            new_y = sin_a * (x - center_x) + cos_a * (y - center_y) + center_y
 
-            # Verifica se as novas coordenadas estão dentro dos limites da nova imagem
+            # Verificando se as novas coordenadas estão dentro dos limites da nova imagem
             if 0 <= new_x < w and 0 <= new_y < h:
                 rotated_image[int(new_y), int(new_x)] = image[y, x]
-    cv2.imwrite(output_path, rotated_image)
+
+    # Salvando a imagem rotacionada
+    Image.fromarray(rotated_image).save(output_path)
     return rotated_image
+
 
 def vertical_pinch(image, amount, output_path):
     rows, cols = image.shape[:2]
@@ -319,11 +373,13 @@ def vertical_pinch(image, amount, output_path):
     cv2.imwrite(output_path, pinched_image)
     return pinched_image
 
+
 import numpy as np
 import cv2
 
 import numpy as np
 import cv2
+
 
 def edge_pinch(image, amount, output_path):
     rows, cols = image.shape[:2]
@@ -338,8 +394,8 @@ def edge_pinch(image, amount, output_path):
             distance_y = (i - center_y) / center_y
 
             # Calcula um fator de escala baseado na distância e no amount
-            scale_x = 1 - amount * distance_x**2
-            scale_y = 1 - amount * distance_y**2
+            scale_x = 1 - amount * distance_x ** 2
+            scale_y = 1 - amount * distance_y ** 2
 
             # Aplica o fator de escala para ajustar os pixels em direção ao centro
             map_x[i, j] = center_x + (j - center_x) * scale_x
@@ -370,93 +426,154 @@ def field_based_warping(image, field, output_path):
     cv2.imwrite(output_path, warped_image)
     return warped_image
 
+
 def aplicar_filtro_mediana(imagem, kernel_size, output_path):
     pad_size = kernel_size // 2
     altura, largura, canais = imagem.shape
     imagem_padded = np.pad(imagem, [(pad_size, pad_size), (pad_size, pad_size), (0, 0)], mode='edge')
     imagem_filtrada = np.zeros_like(imagem)
 
-    # Preparando janelas para cada pixel
-    janelas = np.lib.stride_tricks.as_strided(
-        imagem_padded,
-        shape=(altura, largura, kernel_size, kernel_size, canais),
-        strides=imagem_padded.strides[:2] + imagem_padded.strides[:2] + imagem_padded.strides[2:]
-    )
+    for i in range(altura):
+        for j in range(largura):
+            for c in range(canais):
+                # Extraia a janela em torno do pixel (i, j)
+                janela = imagem_padded[i:i + kernel_size, j:j + kernel_size, c]
 
-    # Calculando a mediana em todas as janelas de uma só vez
-    medianas = np.median(janelas, axis=(2, 3))
+                # Calcule a mediana na mão
+                valor_mediana = calcular_mediana(janela)
+                imagem_filtrada[i, j, c] = valor_mediana
 
-    # Atribuindo os valores de mediana à imagem filtrada
-    imagem_filtrada[:, :, :] = medianas
-
-    cv2.imwrite(output_path, imagem_filtrada)
+    # Salvar a imagem filtrada
+    Image.fromarray(imagem_filtrada).save(output_path)
     return imagem_filtrada
+def calcular_mediana(janela):
+    # Achate a janela e ordene os valores
+    valores_ordenados = np.sort(janela.flatten())
+    # Calcule o índice da mediana
+    meio = len(valores_ordenados) // 2
+
+    # Se o número de elementos for ímpar, retorne o valor do meio
+    if len(valores_ordenados) % 2 != 0:
+        return valores_ordenados[meio]
+    # Se for par, retorne a média dos dois valores centrais
+    else:
+        return (valores_ordenados[meio - 1] + valores_ordenados[meio]) / 2
 
 
 def aplicar_filtro_media(imagem, kernel_size, output_path):
-    kernel = np.ones((kernel_size, kernel_size), dtype=float) / (kernel_size**2)
+    pad_size = kernel_size // 2
+    altura, largura, canais = imagem.shape
+
+    # Padding na imagem para lidar com as bordas
+    imagem_padded = np.pad(imagem, [(pad_size, pad_size), (pad_size, pad_size), (0, 0)], mode='constant', constant_values=0)
     imagem_filtrada = np.zeros_like(imagem)
 
-    for canal in range(imagem.shape[2]):
-        imagem_filtrada[:, :, canal] = cv2.filter2D(imagem[:, :, canal], -1, kernel)
+    # Fator de normalização para o kernel
+    fator_normalizacao = kernel_size ** 2
 
-    cv2.imwrite(output_path, imagem_filtrada)
+    for i in range(altura):
+        for j in range(largura):
+            for c in range(canais):
+                # Extraia a janela em torno do pixel (i, j)
+                janela = imagem_padded[i:i + kernel_size, j:j + kernel_size, c]
+
+                # Calcule a média dos valores da janela
+                valor_medio = np.sum(janela) / fator_normalizacao
+                imagem_filtrada[i, j, c] = valor_medio
+
+    # Salvar a imagem filtrada
+    Image.fromarray(imagem_filtrada).save(output_path)
     return imagem_filtrada
+
+
+import numpy as np
+import cv2
+from PIL import Image
 
 def aplicar_sobel(imagem, output_path):
     # Converter para escala de cinza se for uma imagem colorida
     if imagem.ndim == 3:
-        imagem = np.dot(imagem[...,:3], [0.2989, 0.5870, 0.1140])
+        imagem = np.dot(imagem[..., :3], [0.2989, 0.5870, 0.1140])
 
     # Definindo os kernels de Sobel
-    sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-    sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+    sobel_x = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
+    sobel_y = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
 
     # Inicializando as matrizes de gradiente
+    altura, largura = imagem.shape
     grad_x = np.zeros_like(imagem)
     grad_y = np.zeros_like(imagem)
 
     # Aplicando os kernels de Sobel
-    for i in range(1, imagem.shape[0] - 1):
-        for j in range(1, imagem.shape[1] - 1):
-            regiao = imagem[i-1:i+2, j-1:j+2]
-            grad_x[i, j] = np.sum(sobel_x * regiao)
-            grad_y[i, j] = np.sum(sobel_y * regiao)
+    for i in range(1, altura - 1):
+        for j in range(1, largura - 1):
+            soma_x = soma_y = 0
+            for ki in range(-1, 2):
+                for kj in range(-1, 2):
+                    soma_x += sobel_x[ki + 1][kj + 1] * imagem[i + ki, j + kj]
+                    soma_y += sobel_y[ki + 1][kj + 1] * imagem[i + ki, j + kj]
+            grad_x[i, j] = soma_x
+            grad_y[i, j] = soma_y
 
     # Calculando a magnitude do gradiente
-    magnitude = np.sqrt(grad_x**2 + grad_y**2)
-    magnitude = np.uint8(magnitude / np.max(magnitude) * 255)
+    magnitude = np.sqrt(grad_x ** 2 + grad_y ** 2)
+    magnitude = np.uint8(magnitude / magnitude.max() * 255)
 
     # Salvando a imagem resultante com OpenCV
     cv2.imwrite(output_path, magnitude)
 
     return magnitude
 
-def agucamento_bordas(imagem, output_path):
-    # Aplicando um filtro Laplaciano para detecção de bordas
-    kernel_laplaciano = np.array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]])
-    bordas = cv2.filter2D(imagem, -1, kernel_laplaciano)
 
-    # Adicionando as bordas detectadas de volta à imagem original
-    imagem_agucada = cv2.add(imagem, bordas)
+#converter_para_cinza(imagem)
+def agucamento_bordas(imagem, output_path):
+    imagem_gray = converter_para_cinza(imagem)
+    altura, largura = imagem_gray.shape
+    imagem_agucada = np.zeros_like(imagem_gray)
+
+    # Kernel Laplaciano
+    kernel_laplaciano = [[0, -1, 0], [-1, 4, -1], [0, -1, 0]]
+
+    for i in range(1, altura - 1):
+        for j in range(1, largura - 1):
+            soma = 0
+            for ki in range(-1, 2):
+                for kj in range(-1, 2):
+                    soma += imagem_gray[i + ki, j + kj] * kernel_laplaciano[ki + 1][kj + 1]
+
+            # Adicionando as bordas detectadas de volta à imagem original
+            valor_agucado = imagem_gray[i, j] + soma
+            # Garantindo que os valores estejam dentro dos limites [0, 255]
+            imagem_agucada[i, j] = min(max(valor_agucado, 0), 255)
 
     # Salvando a imagem resultante
-    cv2.imwrite(output_path, imagem_agucada)
+    Image.fromarray(imagem_agucada).save(output_path)
 
     return imagem_agucada
 
+
 def high_boost(imagem, k, output_path):
-    # Aplicando um filtro Laplaciano para detecção de bordas
-    kernel_laplaciano = np.array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]])
-    bordas = cv2.filter2D(imagem, -1, kernel_laplaciano)
+    imagem_gray = converter_para_cinza(imagem)
+    altura, largura = imagem_gray.shape
+    imagem_boosted = np.zeros_like(imagem_gray)
 
-    # Multiplicando as bordas por um fator k e adicionando à imagem original
-    imagem_boosted = cv2.add(imagem, k * bordas)
+    # Kernel Laplaciano
+    kernel_laplaciano = [[0, -1, 0], [-1, 4, -1], [0, -1, 0]]
 
-    # Salvando a imagem resultante
-    cv2.imwrite(output_path, imagem_boosted)
+    for i in range(1, altura - 1):
+        for j in range(1, largura - 1):
+            soma_laplaciana = 0
+            for ki in range(-1, 2):
+                for kj in range(-1, 2):
+                    soma_laplaciana += imagem_gray[i + ki, j + kj] * kernel_laplaciano[ki + 1][kj + 1]
 
+            # Aplicar o high boost
+            valor_boosted = imagem_gray[i, j] + k * soma_laplaciana
+            imagem_boosted[i, j] = np.clip(valor_boosted, 0, 255)
+
+    Image.fromarray(imagem_boosted).save(output_path)
     return imagem_boosted
+
 
 def convolucao_com_offset(imagem, kernel, offset, output_path):
     # Converte a imagem para escala de cinza para simplificar a convolução.
@@ -466,7 +583,8 @@ def convolucao_com_offset(imagem, kernel, offset, output_path):
     pad_largura = (k_largura - 1) // 2
 
     # Aplica padding na imagem em escala de cinza
-    imagem_padded = np.pad(imagem_gray, [(pad_altura, pad_altura), (pad_largura, pad_largura)], mode='constant', constant_values=0)
+    imagem_padded = np.pad(imagem_gray, [(pad_altura, pad_altura), (pad_largura, pad_largura)], mode='constant',
+                           constant_values=0)
 
     # Inicializa a imagem de saída
     altura, largura = imagem_gray.shape
@@ -476,7 +594,7 @@ def convolucao_com_offset(imagem, kernel, offset, output_path):
     for i in range(altura):
         for j in range(largura):
             # Extrai a região de interesse
-            regiao = imagem_padded[i:i+k_altura, j:j+k_largura]
+            regiao = imagem_padded[i:i + k_altura, j:j + k_largura]
             # Aplica a convolução (elemento a elemento)
             conv_sum = np.sum(kernel * regiao)
             imagem_saida[i, j] = conv_sum + offset

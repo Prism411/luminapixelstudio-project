@@ -8,13 +8,14 @@ import numpy as np
 from PIL import ImageTk, Image
 
 from imageProcesser import dissolve_cruzado, dissolve_cruzado_nao_uniforme, redimensionar_imagem, negativo, \
-    alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, scale_image, shear_image, \
+    alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, scale_image, \
     realce_contraste_adaptativo, histogram_equalization, expand_histogram_auto, reflect_image, rotate_image, \
     rotate_image2, field_based_warping, edge_pinch, vertical_pinch, aplicar_filtro_media, aplicar_filtro_mediana, \
-    aplicar_sobel, agucamento_bordas, high_boost, convolucao_com_offset
+    aplicar_sobel, agucamento_bordas, high_boost, convolucao_com_offset, shear_image
 
 
 class ImageDisplayWindow(tk.Toplevel):
+
     def __init__(self, parent, imagepath, image):
         super().__init__(parent)
         self.imagepath = imagepath
@@ -167,8 +168,8 @@ class ImageDisplayWindow(tk.Toplevel):
         label.place(x=760, y=420)
 
         # Combobox para selecionar uma operação
-        self.operationReso = tk.StringVar()
-        self.reso_combobox = ttk.Combobox(self, textvariable=self.operationReso)
+        self.operationSC = tk.StringVar()
+        self.reso_combobox = ttk.Combobox(self, textvariable=self.operationSC)
         self.reso_combobox['values'] = ("Scaling", "Cisalhamento")
         self.reso_combobox.pack()
         self.reso_combobox.place(x=200, y=450)
@@ -549,7 +550,7 @@ class ImageDisplayWindow(tk.Toplevel):
         self.selected_image_label.image = self.selected_image  # Mantenha uma referência
 
     def reso_operation(self, event):
-        operation = self.operationReso.get()
+        operation = self.operationSC.get()
         scale_x, scale_y = float(self.resX_entry.get()), float(self.resY_entry.get())
         # Converter a imagem do Tkinter (PhotoImage) para o formato do OpenCV
         imagePIL = Image.open(self.imagepath)  # Use o caminho do arquivo da imagem original
@@ -559,7 +560,7 @@ class ImageDisplayWindow(tk.Toplevel):
 
         if operation == "Scaling":
             scale_image(imageInput, scale_x, scale_y, output_path)
-        elif operation == "Cisalhamento":
+        if operation == "Cisalhamento": #Cisalhamento
             shear_image(imageInput, scale_x, scale_y, output_path)
 
         self.selected_image = Image.open(output_path)
