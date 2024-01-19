@@ -432,7 +432,7 @@ class ImageDisplayWindow(customtkinter.CTkToplevel):
         imageInput = np.array(imagePIL)  # Converte para array do NumPy
         imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte  de RGB para BGR
         output_path = "luminaprocessing/resultado.png"
-        k = int(self.high_boost_entry.get())
+        k = int(serlf.high_boost_entry.get())
         if k >= 256:
             k = 255
         high_boost(imageInput, k, output_path)

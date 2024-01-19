@@ -5,7 +5,6 @@ from tkinter import ttk, filedialog, simpledialog
 from PIL import Image, ImageTk
 
 from imageDisplayWindow import ImageDisplayWindow
-from processerWindow import ProcesserWindow
 
 
 class MainMenu(tk.Tk):
