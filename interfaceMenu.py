@@ -7,7 +7,8 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 
-from imageProcesser import rotate_image, rotate_image2, reflect_image, dissolve_cruzado, dissolve_cruzado_nao_uniforme
+from imageProcesser import rotate_image, rotate_image2, reflect_image, dissolve_cruzado, dissolve_cruzado_nao_uniforme, \
+    negativo, alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica
 
 
 class App(customtkinter.CTk):
@@ -102,6 +103,96 @@ class ToplevelWindow(customtkinter.CTkToplevel):
                                              command=self.cruzadoCombobox_callback, variable=self.cruzadocombobox_var)
         self.cruzadocombobox_var.set("0.5")
         self.cruzadocombobox.place(x=400,y=5)
+        #FIM DA TRANSFORMAÇÃO DE INTENSIDADE CONFIG
+
+
+        ##COMEÇA AQUI TRANSFORMAÇÃO DE INTENSIDADE CONFIG
+        # Variável para rastrear a escolha do usuário
+        self.selected_operation = customtkinter.StringVar()
+        self.selected_operation.set("Transformação de Intensidade:")  # Defina o valor inicial
+
+        # Combobox para selecionar uma operação
+        self.operations_combobox = customtkinter.CTkComboBox(self.my_frame, values=["Alargamento de Contraste", "Negativo",
+                                                                                    "Limiarização", "Transformação de Potência",
+                                                                                    "Transformação Logarítmica"],command=self.show_value_input,variable =self.selected_operation)
+
+
+        self.operations_combobox.pack()
+        self.operations_combobox.place(x=5, y=40)
+        self.operations_combobox.bind("<<ComboboxSelected>>", self.show_value_input)
+        # Rótulo para descrever o campo de entrada de valor
+        self.value_label = customtkinter.CTkLabel(self.my_frame, text="Valor:")
+        self.value_label.pack()
+        self.value_label.place(x=330, y=360)
+        # Campo de entrada para o valor
+        self.value_entry = customtkinter.CTkEntry(self.my_frame)
+        self.value_entry.pack()
+        self.value_entry.place(x=370, y=360)
+        # Inicialmente oculta o campo de entrada e o rótulo
+        self.value_entry.place_forget()
+        self.value_label.place_forget()
+        self.value_button = customtkinter.CTkButton(self.my_frame, text = "Processar!",command= self.value_operation)
+        self.value_button.place(x= 360,y=40)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ##COMEÇO DAS FUNÇÕES DE CONTROLE AQUI###########################################################
+    def value_operation(self):
+        selected_operation = str(self.selected_operation.get())# Obtém a operação selecionada e o valor, se necessário
+        operation = self.selected_operation.get()
+        value = self.value_entry.get()
+        # Chama a função correspondente baseada na operação selecionada
+        if operation == "Negativo":
+            negativo(self.file_path, self.file_path)
+        elif operation == "Alargamento de Contraste":
+            alargamento_contraste(self.file_path, self.file_path)
+        elif operation == "Limiarização":
+            limiarizacao(self.file_path, self.file_path, float(value))
+        elif operation == "Transformação de Potência":
+            transformacao_potencia(self.file_path, self.file_path, float(value))
+        elif operation == "Transformação Logarítmica":
+            transformacao_logaritmica(self.file_path, self.file_path, float(value))
+        self.atualiza_imagem(self.file_path)
+
+    def show_value_input(self, event):
+        selected_operation = str(self.selected_operation.get())
+
+        # Condições para mostrar ou ocultar o campo de entrada de valor
+        if selected_operation in ("Limiarização", "Transformação de Potência", "Transformação Logarítmica"):
+            self.value_entry.place(x=210, y=40)
+            self.value_label.place(x=150, y=40)
+            self.value_entry.configure(state='normal')
+            print("mostrar")
+        else:
+            self.value_entry.place_forget()
+            self.value_label.place_forget()
+            self.value_entry.delete(0, 'end')
+
+        # Atualiza o rótulo do valor com base na operação selecionada
+        if selected_operation == "Limiarização":
+            self.value_label.configure(text="Threshold:")
+        elif selected_operation == "Transformação de Potência":
+            self.value_label.configure(text="Gamma:")
+
+        elif selected_operation == "Transformação Logarítmica":
+            self.value_label.configure(text="C:")
 
     def cruzadoButton_operation(self):
 
