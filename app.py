@@ -104,7 +104,8 @@ def limpar_pasta_luminaprocessing():
             file_path = os.path.join(processing_folder, filename)
             try:
                 if os.path.isfile(file_path):
-                    os.remove(file_path)
+                    pass
+                    #os.remove(file_path)
             except Exception as e:
                 print(f"Erro ao excluir o arquivo {file_path}: {e}")
 

@@ -218,8 +218,7 @@ def scale_image(image, scale_x, scale_y, output_path):
     return scaled_image
 
 
-import numpy as np
-from PIL import Image
+
 import os
 
 
@@ -270,7 +269,7 @@ def reflect_image(image, axis, output_path):
             reflected_image[i] = image[height - 1 - i]
 
     # Converter para um array do NumPy
-    np_image = np.array(reflected_image, dtype=np.uint8)
+        np_image = np.array(reflected_image, dtype=np.uint8)
 
     # Salvar a imagem
     cv2.imwrite(output_path, np_image)

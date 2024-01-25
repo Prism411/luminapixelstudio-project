@@ -1,14 +1,16 @@
 import os
 import shutil
 import tkinter
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import customtkinter
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
 
 from imageProcesser import rotate_image, rotate_image2, reflect_image, dissolve_cruzado, dissolve_cruzado_nao_uniforme, \
-    negativo, alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica
+    negativo, alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, \
+    expand_histogram_auto, histogram_equalization, realce_contraste_adaptativo, scale_image, shear_image, edge_pinch, \
+    vertical_pinch, field_based_warping
 
 
 class App(customtkinter.CTk):
@@ -133,25 +135,151 @@ class ToplevelWindow(customtkinter.CTkToplevel):
         self.value_label.place_forget()
         self.value_button = customtkinter.CTkButton(self.my_frame, text = "Processar!",command= self.value_operation)
         self.value_button.place(x= 360,y=40)
+        ##OPERACOES DO HISTOGRAMA AQUI
+
+        self.equalHist_button = customtkinter.CTkButton(self.my_frame, text="Equalizar Histograma", command=self.equalHist_operation)
+        self.equalHist_button.place(x=5,y=80)
+
+        self.expandHist_button = customtkinter.CTkButton(self.my_frame, text="Expandir Histograma",
+                                                        command=self.expandHist_operation)
+        self.expandHist_button.place(x=150, y=80)
+        self.gain_label = customtkinter.CTkLabel(self.my_frame, text="Ganho:")
+        self.gain_label.place(x=300,y=80)
+        self.gain_entry = customtkinter.CTkEntry(self.my_frame)
+        self.gain_entry.place(x=350,y=80)
+
+
+        #Controle de Contraste
+        self.C_label = customtkinter.CTkLabel(self.my_frame, text="C:")
+        self.C_label.place(x=5,y=120)
+        self.C_entry = customtkinter.CTkEntry(self.my_frame)
+        self.C_entry.place(x=20,y=120)
+
+        self.kernel_label = customtkinter.CTkLabel(self.my_frame, text="Tamanho Kernel:")
+        self.kernel_label.place(x=170,y=120)
+
+        self.kernel_entry = customtkinter.CTkEntry(self.my_frame)
+        self.kernel_entry.place(x=270,y=120)
+
+        self.ctrlContraste_button = customtkinter.CTkButton(self.my_frame, text="Controle Contraste",
+                                                        command=self.ctrlContraste_operation)
+        self.ctrlContraste_button.place(x=500, y=120)
+        ## FIM DO CONTROLE DE CONTRASTE
+
+        ##Inicio das Resoluçao
+        # Variável para rastrear a escolha do usuário
+        self.resoselected_operation = customtkinter.StringVar()
+        self.reso_combobox = customtkinter.CTkComboBox(self.my_frame,
+                                                             values=["Cisalhamento", "Scalling"],
+                                                             variable=self.resoselected_operation)
+        self.reso_combobox.place(x=5,y=160)
+        self.x_label = customtkinter.CTkLabel(self.my_frame, text="Aumento em X:")
+        self.x_label.place(x=150,y=160)
+
+        self.x_entry = customtkinter.CTkEntry(self.my_frame)
+        self.x_entry.place(x=240,y=160)
+
+        self.y_label = customtkinter.CTkLabel(self.my_frame, text="Aumento em Y:")
+        self.y_label.place(x=380,y=160)
+
+        self.y_entry = customtkinter.CTkEntry(self.my_frame)
+        self.y_entry.place(x=470,y=160)
+
+        self.reso_button = customtkinter.CTkButton(self.my_frame, text="Processar Resolução",
+                                                            command=self.reso_Operation)
+        self.reso_button.place(x=610,y=160)
+        #FIM DAS RESO_OPERATIONS
+
+        ### PPW pinch pinch warp aqui
+        ##INCIO
+        self.ppw_operation = customtkinter.StringVar()
+        self.ppw_operation.set("Selecionar Modo!")
+        self.ppw_combobox = customtkinter.CTkComboBox(self.my_frame,
+                                                       values=["Pínch Vertical", "Pinch nas Bordas","Warping Baseado em Campo"],
+                                                       variable=self.ppw_operation)
+        self.ppw_combobox.place(x=5,y=200)
+
+        self.ppw_label = customtkinter.CTkLabel(self.my_frame, text="Quantidade:")
+        self.ppw_label.place(x=150, y=200)
+
+        self.ppw_entry = customtkinter.CTkEntry(self.my_frame)
+        self.ppw_entry.place(x=220, y=200)
+
+        self.ppw_button = customtkinter.CTkButton(self.my_frame, text="Processar Resolução",
+                                                   command=self.ppw_Operation)
+        self.ppw_button.place(x=370,y=200)
 
 
 
 
 
+    def ppw_Operation(self):
+        image = imageTransform(self.file_path)
+        opr = str(self.ppw_operation.get())
+        if opr == "Pínch Vertical":
+            amount = int(self.ppw_entry.get())
+            vertical_pinch(image, amount, self.file_path)
+        if opr == "Pinch nas Bordas":
+            amount = float(self.ppw_entry.get())
+            edge_pinch(image, amount, self.file_path)
+        if opr == "Warping Baseado em Campo":
+            amount = int(self.ppw_entry.get())
+            rows, cols = image.shape[:2]
+            field = [[[0, 0] for _ in range(cols)] for _ in range(rows)]
+            center_x, center_y = cols / 2, rows / 2
+            for i in range(rows):
+                for j in range(cols):
+                    distance_to_center = np.sqrt((center_x - j) ** 2 + (center_y - i) ** 2)
+                    scale = (1 - distance_to_center / max(center_x, center_y)) * amount
+                    field[i][j] = [scale * (center_x - j), scale * (center_y - i)]
+            field_based_warping(image, field, self.file_path)
+        self.atualiza_imagem(self.file_path)
 
 
+    def reso_Operation(self):
+        opr = str(self.resoselected_operation.get())
+        image = imageTransform(self.file_path)
+        scale_x = float(self.x_entry.get())
+        scale_y = float(self.y_entry.get())
+        if scale_x > 1:
+            messagebox.showwarning("CUIDADO", "Cuidado ao Usar Valores Maiores que 1!\nisto é um aumento de proporção na resolução!")
+        if scale_y > 1:
+            messagebox.showwarning("CUIDADO", "Cuidado ao Usar Valores Maiores que 1!\nisto é um aumento de proporção na resolução!")
+        if opr == "Cisalhamento":
+            shear_image(image, scale_x, scale_y, self.file_path)
+        if opr == "Scalling":
+            scale_image(image, scale_x, scale_y, self.file_path)
 
 
+    def ctrlContraste_operation(self):
+        image = imageTransform(self.file_path)
+        c = int(self.C_entry.get())
+        tamanho_kernel = int(self.kernel_entry.get())
+        result = realce_contraste_adaptativo(image, c, tamanho_kernel)
+        imagem_final = Image.fromarray(np.array(result, dtype=np.uint8))
+        imagem_final.save(self.file_path)
+        self.atualiza_imagem(self.file_path)
 
+    def expandHist_operation(self):
+        gain = self.gain_entry.get().strip()
+        if not gain:
+            messagebox.showerror("Erro", "Por favor, insira um valor para o ganho.")
+        else:
+            try:
+                gain = int(gain)
+                image = imageTransform(self.file_path)
+                expand_histogram_auto(image, gain, self.file_path, True)
+                self.atualiza_imagem(self.file_path)
+            except ValueError:
+                messagebox.showerror("Erro", "O ganho deve ser um número inteiro.")
 
-
-
-
-
-
-
-
-
+        pass
+    def equalHist_operation(self):
+        gain = int(self.gain_entry.get())
+        image = imageTransform(self.file_path)
+        histogram_equalization(image, self.file_path, True)
+        self.atualiza_imagem(self.file_path)
+        pass
 
   ##COMEÇO DAS FUNÇÕES DE CONTROLE AQUI###########################################################
     def value_operation(self):
@@ -274,5 +402,5 @@ def imageTransform(filepath):
 
 
 
-app = ToplevelWindow(file_path=r"C:\Users\jader\Desktop\estudos\ProcessamentoProva\luminaprocessing\real (35).png")
+app = ToplevelWindow(file_path=r"C:\Users\jader\Desktop\estudos\ProcessamentoProva\luminaprocessing\image_0.png")
 app.mainloop()

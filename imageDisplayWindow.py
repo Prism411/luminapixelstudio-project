@@ -564,7 +564,7 @@ class ImageDisplayWindow(customtkinter.CTkToplevel):
         imageInput = cv2.cvtColor(imageInput, cv2.COLOR_RGB2BGR)  # Converte de RGB para BGR
         output_path = "luminaprocessing/resultado.png"
 
-        if operation == "Scaling":
+        if operation == "Scaling": #Scalingg
             scale_image(imageInput, scale_x, scale_y, output_path)
         if operation == "Cisalhamento": #Cisalhamento
             shear_image(imageInput, scale_x, scale_y, output_path)
