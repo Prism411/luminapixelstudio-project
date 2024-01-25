@@ -610,3 +610,35 @@ def convolucao_com_offset(imagem, kernel, offset, output_path):
     Image.fromarray(imagem_saida_np).save(output_path)
 
     return imagem_saida_np
+
+#definição de mascara de matriz do filtro de aguçamento
+def sharpness_filter(c,d):
+    return[
+        [-c, -c, -c],
+        [-c, 8*c + d, -c],
+        [-c, -c, -c]
+    ]
+
+#definição de mascara primeira versão da matriz de filtro de relevo
+def emboss_filter_one():
+    return[
+        [0, 0, 0], 
+        [0, 1, 0], 
+        [0, 0, -1]
+    ]
+
+#definição de mascara da segunda versão da matriz de filtro de relevo
+def emboss_filter_two():
+    return[
+        [0, 0, 2], 
+        [0, -1, 0], 
+        [-1, 0, 0]
+    ]
+
+#definição de mascara da matriz do filtro de detecção de bordas
+def deteccao_bordas():
+    return[
+        [0, -1, 0],
+        [-1, -4, -1],
+        [0, -1, 0]
+    ]
