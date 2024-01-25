@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 import tkinter as tk
-from tkinter import filedialog, ttk, messagebox
+from tkinter import filedialog, ttk, messagebox, simpledialog
 
 from imageProcesser import rotate_image, rotate_image2, reflect_image, dissolve_cruzado, dissolve_cruzado_nao_uniforme, \
     negativo, alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, \
@@ -19,13 +19,45 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         self.geometry("800x650")
-        self.title("CTk example")
+        self.resizable(False, False)
+        self.title("Lumina Pixel Studio")
         customtkinter.set_appearance_mode("dark")
-
+        self.my_frame = customtkinter.CTkFrame(self, width=750, height=350)
+        #C:\Users\jader\Desktop\estudos\ProcessamentoProva\icons\iconRemoveBG.png
+        # Use place for positioning only
+        self.my_frame.place(x=25, y=270)
         # Botão para selecionar imagem
         self.button = customtkinter.CTkButton(self, text="Selecionar Imagem", command=self.button_click)
-        self.button.place(x=355, y=450)
+        self.button.place(x=340, y=550)
+        self.prcpImage = customtkinter.CTkImage(dark_image=Image.open("icons/iconRemoveBG.png"),
+                                          size=(270, 270))
+        self.image_label = customtkinter.CTkLabel(self, image=self.prcpImage, text="")
+        self.image_label.place(x=280,y=0)
+        self.folderImage = customtkinter.CTkImage(dark_image=Image.open("icons/folder.png"),
+                                          size=(32, 32))
+        self.contactImage = self.button = customtkinter.CTkImage(dark_image=Image.open("icons/contact.png"),
+                                          size=(32, 32))
+        self.infoImage = self.button = customtkinter.CTkImage(dark_image=Image.open("icons/info.png"),
+                                          size=(32, 32))
+        self.folder_button =  self.button = customtkinter.CTkButton(self, text="", command=self.folder_button_operation, image=self.folderImage)
+        self.folder_button.place(x = 125,y=325)
 
+        self.contact_button =  self.button = customtkinter.CTkButton(self, text="", command=self.contact_button_operation, image=self.contactImage)
+        self.contact_button.place(x = 340,y=325)
+
+        self.info_button = self.button = customtkinter.CTkButton(self, text="", command=self.info_image_operation,
+                                                                    image=self.infoImage)
+        self.info_button.place(x=540, y=325)
+
+    def info_image_operation(self):
+        info_text = """Este é o LuminaPixel Studio, um aplicativo de processamento de imagens. Você pode usar este aplicativo para realizar várias operações em imagens, como redimensionamento, filtragem e muito mais."""
+        simpledialog.messagebox.showinfo("Informações", info_text)
+    def contact_button_operation(self):
+        contact_text = """Aplicativo criado por Jáder Louis e Nataly Tobias com a Orientação do Professor Dr. Lucas Marques da Cunha, Universidade Federal de Rondônia do Departamento de Ciencia da Computação (DACC), em Janeiro de 2024.
+                   """
+        simpledialog.messagebox.showinfo("Contato", contact_text)
+    def folder_button_operation(self):
+        os.startfile("luminaprocessing")
     def button_click(self):
         file_path = filedialog.askopenfilename(filetypes=[("Imagens", "*.png *.jpg *.jpeg *.gif *.bmp")])
         if file_path:
@@ -44,14 +76,14 @@ class App(customtkinter.CTk):
             print(f"Imagem copiada para: {new_filename}")
 
             # Abrir a janela Toplevel
-            toplevel = ToplevelWindow(self, new_filename)
+            toplevel = ToplevelWindow(new_filename)
 
 class ToplevelWindow(customtkinter.CTkToplevel):
     def __init__(self, file_path, *args, **kwargs): #colocar o master aqui
         super().__init__( *args, **kwargs) #colocar o master aqui tambem
         self.geometry("800x650")
         self.resizable(False, False)
-        self.title("Image Preview")
+        self.title("Lumina Pixel Studio - Image Preview")
         self.file_path = file_path
         customtkinter.set_appearance_mode("dark")
         self.font = ("calibri", 18)
@@ -552,5 +584,5 @@ def imageTransform(filepath):
 
 
 
-app = ToplevelWindow(file_path=r"C:\Users\jader\Desktop\estudos\ProcessamentoProva\luminaprocessing\image_0.png")
+app = App()
 app.mainloop()
