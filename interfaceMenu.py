@@ -1,16 +1,18 @@
 import os
 import shutil
 import tkinter
-from tkinter import filedialog, messagebox
 import customtkinter
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
+import tkinter as tk
+from tkinter import filedialog, ttk, messagebox
 
 from imageProcesser import rotate_image, rotate_image2, reflect_image, dissolve_cruzado, dissolve_cruzado_nao_uniforme, \
     negativo, alargamento_contraste, limiarizacao, transformacao_potencia, transformacao_logaritmica, \
     expand_histogram_auto, histogram_equalization, realce_contraste_adaptativo, scale_image, shear_image, edge_pinch, \
-    vertical_pinch, field_based_warping
+    vertical_pinch, field_based_warping, aplicar_filtro_media, aplicar_filtro_mediana, agucamento_bordas, aplicar_sobel, \
+    high_boost, convolucao_com_offset
 
 
 class App(customtkinter.CTk):
@@ -208,10 +210,158 @@ class ToplevelWindow(customtkinter.CTkToplevel):
         self.ppw_button = customtkinter.CTkButton(self.my_frame, text="Processar Resolução",
                                                    command=self.ppw_Operation)
         self.ppw_button.place(x=370,y=200)
+        ##Fim do ppw aqui
 
+        ##Inicio dos filtros
+       #"Filtro Media",
+       # "Filtro Mediana",
+        self.selectedfiltro_operation = customtkinter.StringVar()
+        self.selectedfiltro_operation.set("Selecionar Modo!")
+        self.filtro_combobox = customtkinter.CTkComboBox(self.my_frame,
+                                                  values=["Filtro Media", "Filtro Mediana"],
+                                                  variable=self.selectedfiltro_operation)
+        self.filtro_combobox.place(x=5,y=240)
 
+        self.kernelFilter_label = customtkinter.CTkLabel(self.my_frame, text="Tamanho do Kernel:")
+        self.kernelFilter_label.place(x=150, y=240)
 
+        self.kernelFilter_entry = customtkinter.CTkEntry(self.my_frame)
+        self.kernelFilter_entry.place(x=270, y=240)
 
+        self.filtro_button = customtkinter.CTkButton(self.my_frame, text="Processar Filtro",
+                                                  command=self.filtro_operation)
+        self.filtro_button.place(x=5, y=240)
+
+        ##FILTROS ABAIXO
+
+        self.sobel_button = customtkinter.CTkButton(self.my_frame, text="Gradiente de Sobel",
+                                                  command=self.sobel_operation)
+        self.sobel_button.place(x=5, y=280)
+
+        self.algcBordas_button = customtkinter.CTkButton(self.my_frame, text="Aguçamento de Bordas",
+                                                  command=self.algcBordas_operation)
+        self.algcBordas_button.place(x=147, y=280)
+
+        self.k_label = customtkinter.CTkLabel(self.my_frame, text="Valor de K:")
+        self.k_label.place(x=300, y=280)
+
+        self.k_entry = customtkinter.CTkEntry(self.my_frame)
+        self.k_entry.place(x=363, y=280)
+
+        self.highboost_button = customtkinter.CTkButton(self.my_frame, text="Processar HighBoost",
+                                                    command=self.highboost_button)
+        self.highboost_button.place(x=510,y=280)
+
+        ##Fim dos Filtros
+        ##Inicio da Convolução
+        self.inserirMatriz_button = customtkinter.CTkButton(self.my_frame, text="Inserir Matriz (N x M)",
+                                                    command=self.inserir_matriz)
+        self.inserirMatriz_button.place(x=5,y=320)
+        self.convoOffset_label = customtkinter.CTkLabel(self.my_frame, text="Valor de K:")
+        self.convoOffset_label.place(x=150, y=320)
+
+        self.convoOffset_entry = customtkinter.CTkEntry(self.my_frame)
+        self.convoOffset_entry.place(x=220, y=320)
+
+        self.convo_button = customtkinter.CTkButton(self.my_frame, text="Processar Convolução",
+                                                        command=self.convo_operation)
+        self.convo_button.place(x=510, y=320)
+
+    def convo_operation(self):
+        image = imageTransform(self.file_path)
+        kernel = np.array(self.matriz)
+        offset = int(self.convoOffset_entry.get())
+        convolucao_com_offset(image, kernel, offset, self.file_path)
+        self.atualiza_imagem(self.file_path)
+        pass
+
+    def inserir_matriz(self):
+        # Criar uma nova janela
+        self.janela_matriz = tk.Toplevel(self)
+        self.janela_matriz.title("Inserir Matriz")
+
+        # Entradas para as dimensões da matriz (n x m)
+        self.entrada_n = tk.Entry(self.janela_matriz, width=5)
+        self.entrada_n.grid(row=0, column=1)
+        self.entrada_m = tk.Entry(self.janela_matriz, width=5)
+        self.entrada_m.grid(row=1, column=1)
+
+        tk.Label(self.janela_matriz, text="Linhas (n):").grid(row=0, column=0)
+        tk.Label(self.janela_matriz, text="Colunas (m):").grid(row=1, column=0)
+
+        # Botão para criar as entradas da matriz
+        botao_criar = tk.Button(self.janela_matriz, text="Criar Matriz", command=self.criar_campos_matriz)
+        botao_criar.grid(row=2, column=1)
+
+        # Lista para armazenar as entradas (widgets Entry)
+        self.entradas_matriz = []
+
+    def criar_campos_matriz(self):
+        # Limpando entradas anteriores
+        for linha in self.entradas_matriz:
+            for entrada in linha:
+                entrada.destroy()
+        self.entradas_matriz.clear()
+
+        try:
+            n = int(self.entrada_n.get())
+            m = int(self.entrada_m.get())
+            max_altura, max_largura = 3, 3  #
+            if n > max_altura or m > max_largura:
+                messagebox.showwarning("Tamanho Inválido",
+                                       f"O tamanho do kernel deve ser no máximo {max_altura}x{max_largura}.")
+                return
+        except ValueError:
+            messagebox.showerror("Entrada Inválida", "Por favor, insira números inteiros para as dimensões.")
+            return
+
+        # Criando campos de entrada para a matriz
+        for i in range(n):
+            linha = []
+            for j in range(m):
+                entrada = tk.Entry(self.janela_matriz, width=5)
+                entrada.grid(row=i + 3, column=j)
+                linha.append(entrada)
+            self.entradas_matriz.append(linha)
+
+        # Botão para obter os valores da matriz
+        botao_obter = tk.Button(self.janela_matriz, text="Obter Matriz", command=self.obter_valores_matriz)
+        botao_obter.grid(row=n + 3, columnspan=m)
+
+    def obter_valores_matriz(self):
+        try:
+            self.matriz = [[float(entrada.get()) for entrada in linha] for linha in self.entradas_matriz]
+            print("Matriz:", self.matriz)
+        except ValueError:
+            print("Por favor, insira apenas números.")
+            self.matriz = None
+    def highboost_button(self):
+        imageInput = imageTransform(self.file_path)
+        k = int(self.k_entry.get())
+        if k>256:
+            k = 255
+        high_boost(imageInput, k, self.file_path)
+        self.atualiza_imagem(self.file_path)
+        pass
+    def algcBordas_operation(self):
+        imageInput = imageTransform(self.file_path)
+        agucamento_bordas(imageInput, self.file_path)
+        self.atualiza_imagem(self.file_path)
+        pass
+    def sobel_operation(self):
+        imageInput = imageTransform(self.file_path)
+        aplicar_sobel(imageInput, self.file_path)
+        self.atualiza_imagem(self.file_path)
+        pass
+    def filtro_operation(self):
+        image = imageTransform(self.file_path)
+        opr = str(self.selectedfiltro_operation.get())
+        kernel_size = int(self.kernelFilter_entry.get())
+        if opr == "Filtro Media":
+            aplicar_filtro_media(image, kernel_size, self.file_path)
+        if opr == "Filtro Mediana":
+            aplicar_filtro_mediana(image, kernel_size, self.file_path)
+        self.atualiza_imagem(self.file_path)
 
     def ppw_Operation(self):
         image = imageTransform(self.file_path)
