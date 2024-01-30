@@ -94,7 +94,7 @@ def transformacao_potencia(image_path, output_path, gamma):
 
 def transformacao_logaritmica(image_path, output_path, c):
     image = Image.open(image_path)
-    log_transformed = Image.eval(image, lambda x: int(c * np.log(1 + x)))
+    log_transformed = Image.eval(image, lambda x: int(c * math.log(1 + x)))
     log_transformed.save(output_path)
 
 

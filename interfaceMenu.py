@@ -22,31 +22,32 @@ class App(customtkinter.CTk):
         self.resizable(False, False)
         self.title("Lumina Pixel Studio")
         customtkinter.set_appearance_mode("dark")
-        self.my_frame = customtkinter.CTkFrame(self, width=750, height=350)
+        font = ("calibri",24)
+        self.my_frame = customtkinter.CTkFrame(self, width=400, height=150)
         #C:\Users\jader\Desktop\estudos\ProcessamentoProva\icons\iconRemoveBG.png
         # Use place for positioning only
-        self.my_frame.place(x=25, y=270)
+        self.my_frame.place(x=210, y=415)
         # Botão para selecionar imagem
-        self.button = customtkinter.CTkButton(self, text="Selecionar Imagem", command=self.button_click)
-        self.button.place(x=340, y=550)
+        self.button = customtkinter.CTkButton(self, text="Selecionar Imagem", command=self.button_click,font=font)
+        self.button.place(x=310, y=470)
         self.prcpImage = customtkinter.CTkImage(dark_image=Image.open("icons/iconRemoveBG.png"),
-                                          size=(270, 270))
+                                          size=(312, 312))
         self.image_label = customtkinter.CTkLabel(self, image=self.prcpImage, text="")
-        self.image_label.place(x=280,y=0)
-        self.folderImage = customtkinter.CTkImage(dark_image=Image.open("icons/folder.png"),
+        self.image_label.place(x=256,y=0)
+        self.folderImage = customtkinter.CTkImage(dark_image=Image.open("icons/folder2.png"),
                                           size=(32, 32))
         self.contactImage = self.button = customtkinter.CTkImage(dark_image=Image.open("icons/contact.png"),
                                           size=(32, 32))
         self.infoImage = self.button = customtkinter.CTkImage(dark_image=Image.open("icons/info.png"),
                                           size=(32, 32))
-        self.folder_button =  self.button = customtkinter.CTkButton(self, text="", command=self.folder_button_operation, image=self.folderImage)
+        self.folder_button =  self.button = customtkinter.CTkButton(self, text="", command=self.folder_button_operation, image=self.folderImage,fg_color="transparent")
         self.folder_button.place(x = 125,y=325)
 
-        self.contact_button =  self.button = customtkinter.CTkButton(self, text="", command=self.contact_button_operation, image=self.contactImage)
+        self.contact_button =  self.button = customtkinter.CTkButton(self, text="", command=self.contact_button_operation, image=self.contactImage,fg_color="transparent")
         self.contact_button.place(x = 340,y=325)
 
         self.info_button = self.button = customtkinter.CTkButton(self, text="", command=self.info_image_operation,
-                                                                    image=self.infoImage)
+                                                                    image=self.infoImage,fg_color="transparent")
         self.info_button.place(x=540, y=325)
 
     def info_image_operation(self):
