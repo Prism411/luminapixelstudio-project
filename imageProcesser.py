@@ -583,14 +583,15 @@ def high_boost(imagem, k, output_path):
 
 
 def convolucao_com_offset(imagem, kernel, offset, output_path):
-    # Converte a imagem para escala de cinza para simplificar a convolução.
     imagem_gray = converter_para_cinza(imagem)
     k_altura, k_largura = len(kernel), len(kernel[0])
     pad_altura, pad_largura = k_altura // 2, k_largura // 2
 
-    # Inicializa a imagem de saída
     altura, largura = len(imagem_gray), len(imagem_gray[0])
     imagem_saida = [[0] * largura for _ in range(altura)]
+
+    # Calcula o valor mínimo e máximo para normalização
+    min_val, max_val = float('inf'), -float('inf')
 
     # Aplica a operação de convolução
     for i in range(pad_altura, altura - pad_altura):
@@ -598,14 +599,24 @@ def convolucao_com_offset(imagem, kernel, offset, output_path):
             conv_sum = 0
             for m in range(k_altura):
                 for n in range(k_largura):
-                    conv_sum += (imagem_gray[i + m - pad_altura][j + n - pad_largura] *
-                                 kernel[m][n])
+                    conv_sum += (imagem_gray[i + m - pad_altura][j + n - pad_largura] * kernel[m][n])
             conv_sum += offset
-            # Garante que os valores da imagem estão dentro dos limites [0, 255]
-            conv_sum = max(min(conv_sum, 255), 0)
+
+            # Atualiza os valores mínimos e máximos
+            min_val = min(min_val, conv_sum)
+            max_val = max(max_val, conv_sum)
+
             imagem_saida[i][j] = conv_sum
 
-    # Convertendo de volta para o array do NumPy para salvar a imagem
+    # Normaliza a imagem de saída
+    for i in range(altura):
+        for j in range(largura):
+            if min_val != max_val:
+                # Escala o valor para o intervalo de 0 a 255
+                imagem_saida[i][j] = 255 * (imagem_saida[i][j] - min_val) / (max_val - min_val)
+            else:
+                imagem_saida[i][j] = 0
+
     imagem_saida_np = np.array(imagem_saida, dtype=np.uint8)
     Image.fromarray(imagem_saida_np).save(output_path)
 
