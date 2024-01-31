@@ -432,6 +432,7 @@ class ToplevelWindow(customtkinter.CTkToplevel):
             shear_image(image, scale_x, scale_y, self.file_path)
         if opr == "Scalling":
             scale_image(image, scale_x, scale_y, self.file_path)
+        self.atualiza_imagem(self.file_path)
 
 
     def ctrlContraste_operation(self):
@@ -544,11 +545,10 @@ class ToplevelWindow(customtkinter.CTkToplevel):
         if operacao == 1:
             reflect_image(image, 1, self.file_path)
             self.atualiza_imagem(self.file_path)
-            pass
         else:
             reflect_image(image, 0, self.file_path)
             self.atualiza_imagem(self.file_path)
-            pass
+
 
     def rot_buttonOperation(self):
         image = imageTransform(self.file_path)

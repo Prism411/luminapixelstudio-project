@@ -68,34 +68,176 @@ def dissolve_cruzado_nao_uniforme(image_path1, image_path2, output_path, alpha):
 
 
 def negativo(image_path, output_path):
+    # Abrir a imagem original
     image = Image.open(image_path)
-    negative_image = Image.eval(image, lambda x: 255 - x)
+
+    # Converter a imagem para o modo 'L' (escala de cinzas) para simplificar a transformação
+    # Se a imagem já estiver em escala de cinzas, essa linha pode ser removida
+    image = image.convert('L')
+
+    # Obter as dimensões da imagem
+    width, height = image.size
+
+    # Criar uma nova imagem para armazenar o resultado
+    negative_image = Image.new('L', (width, height))
+
+    # Iterar sobre cada pixel da imagem
+    for x in range(width):
+        for y in range(height):
+            # Obter o valor do pixel (0 a 255 para uma imagem em escala de cinzas)
+            pixel_value = image.getpixel((x, y))
+
+            # Inverter o valor do pixel
+            new_value = 255 - pixel_value
+
+            # Definir o valor do pixel na nova imagem
+            negative_image.putpixel((x, y), new_value)
+
+    # Salvar a imagem transformada
     negative_image.save(output_path)
 
 
 def alargamento_contraste(image_path, output_path):
+    # Abrir a imagem original
     image = Image.open(image_path)
-    contrast_stretched = Image.eval(image, lambda x: (x - 100) * 255 / (
-                200 - 100) if 100 <= x <= 200 else 0 if x < 100 else 255)
-    contrast_stretched.save(output_path)
+
+    # Converter a imagem para o modo 'L' (escala de cinzas) para simplificar a transformação
+    # Se a imagem já estiver em escala de cinzas, essa linha pode ser removida
+    image = image.convert('L')
+
+    # Obter as dimensões da imagem
+    width, height = image.size
+
+    # Criar uma nova imagem para armazenar o resultado
+    stretched_image = Image.new('L', (width, height))
+
+    # Definir os limites para o alargamento do contraste
+    lower_bound, upper_bound = 100, 200
+
+    # Iterar sobre cada pixel da imagem
+    for x in range(width):
+        for y in range(height):
+            # Obter o valor do pixel (0 a 255 para uma imagem em escala de cinzas)
+            pixel_value = image.getpixel((x, y))
+
+            # Aplicar o alargamento de contraste
+            if lower_bound <= pixel_value <= upper_bound:
+                # Alargar o contraste para os pixels dentro dos limites
+                stretched_value = int((pixel_value - lower_bound) * 255 / (upper_bound - lower_bound))
+            elif pixel_value < lower_bound:
+                # Definir os pixels abaixo do limite inferior para 0
+                stretched_value = 0
+            else:
+                # Definir os pixels acima do limite superior para 255
+                stretched_value = 255
+
+            # Garantir que o valor transformado fique dentro do intervalo aceitável (0 a 255)
+            stretched_value = min(max(stretched_value, 0), 255)
+
+            # Definir o valor do pixel transformado na nova imagem
+            stretched_image.putpixel((x, y), stretched_value)
+
+    # Salvar a imagem transformada
+    stretched_image.save(output_path)
 
 
 def limiarizacao(image_path, output_path, threshold):
+    # Abrir a imagem original
     image = Image.open(image_path)
-    thresholded = Image.eval(image, lambda x: 0 if x < threshold else 255)
-    thresholded.save(output_path)
+
+    # Converter a imagem para o modo 'L' (escala de cinzas) para simplificar a transformação
+    # Se a imagem já estiver em escala de cinzas, essa linha pode ser removida
+    image = image.convert('L')
+
+    # Obter as dimensões da imagem
+    width, height = image.size
+
+    # Criar uma nova imagem para armazenar o resultado
+    thresholded_image = Image.new('L', (width, height))
+
+    # Iterar sobre cada pixel da imagem
+    for x in range(width):
+        for y in range(height):
+            # Obter o valor do pixel (0 a 255 para uma imagem em escala de cinzas)
+            pixel_value = image.getpixel((x, y))
+
+            # Aplicar a limiarização
+            if pixel_value < threshold:
+                new_value = 0
+            else:
+                new_value = 255
+
+            # Definir o valor do pixel na nova imagem
+            thresholded_image.putpixel((x, y), new_value)
+
+    # Salvar a imagem transformada
+    thresholded_image.save(output_path)
 
 
 def transformacao_potencia(image_path, output_path, gamma):
+    # Abrir a imagem original
     image = Image.open(image_path)
-    gamma_corrected = Image.eval(image, lambda x: int(255 * (x / 255) ** gamma))
-    gamma_corrected.save(output_path)
+
+    # Converter a imagem para o modo 'L' (escala de cinzas) para simplificar a transformação
+    # Se a imagem já estiver em escala de cinzas, essa linha pode ser removida
+    image = image.convert('L')
+
+    # Obter as dimensões da imagem
+    width, height = image.size
+
+    # Criar uma nova imagem para armazenar o resultado
+    transformed_image = Image.new('L', (width, height))
+
+    # Iterar sobre cada pixel da imagem
+    for x in range(width):
+        for y in range(height):
+            # Obter o valor do pixel (0 a 255 para uma imagem em escala de cinzas)
+            pixel_value = image.getpixel((x, y))
+
+            # Aplicar a correção gama
+            transformed_value = int(255 * ((pixel_value / 255) ** gamma))
+
+            # Garantir que o valor transformado fique dentro do intervalo aceitável (0 a 255)
+            transformed_value = min(max(transformed_value, 0), 255)
+
+            # Definir o valor do pixel transformado na nova imagem
+            transformed_image.putpixel((x, y), transformed_value)
+
+    # Salvar a imagem transformada
+    transformed_image.save(output_path)
 
 
 def transformacao_logaritmica(image_path, output_path, c):
+    # Abrir a imagem original
     image = Image.open(image_path)
-    log_transformed = Image.eval(image, lambda x: int(c * math.log(1 + x)))
-    log_transformed.save(output_path)
+
+    # Converter a imagem para o modo 'L' (escala de cinzas) para simplificar a transformação
+    # Se a imagem já estiver em escala de cinzas, essa linha pode ser removida
+    image = image.convert('L')
+
+    # Obter as dimensões da imagem
+    width, height = image.size
+
+    # Criar uma nova imagem para armazenar o resultado
+    transformed_image = Image.new('L', (width, height))
+
+    # Iterar sobre cada pixel da imagem
+    for x in range(width):
+        for y in range(height):
+            # Obter o valor do pixel (0 a 255 para uma imagem em escala de cinzas)
+            pixel_value = image.getpixel((x, y))
+
+            # Aplicar a transformação logarítmica
+            transformed_value = int(c * math.log(1 + pixel_value))
+
+            # Garantir que o valor transformado fique dentro do intervalo aceitável (0 a 255)
+            transformed_value = min(max(transformed_value, 0), 255)
+
+            # Definir o valor do pixel transformado na nova imagem
+            transformed_image.putpixel((x, y), transformed_value)
+
+    # Salvar a imagem transformada
+    transformed_image.save(output_path)
 
 
 import matplotlib.pyplot as plt
@@ -207,14 +349,40 @@ def realce_contraste_adaptativo(imagem, c, tamanho_kernel):
 
 # Função para mudança de escala (scaling)
 def scale_image(image, scale_x, scale_y, output_path):
+    # Obter as dimensões originais da imagem
     height, width = image.shape[:2]
-    # Calculando o novo tamanho com base nos fatores de escala
+
+    # Calcular o novo tamanho com base nos fatores de escala
     new_width = int(width * scale_x)
     new_height = int(height * scale_y)
-    # Redimensionando a imagem
-    scaled_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
-    # Salvando a imagem transformada
+
+    # Criar uma nova imagem com o novo tamanho
+    scaled_image = np.zeros((new_height, new_width, image.shape[2]), dtype=np.uint8)
+
+    # Mapear cada pixel da nova imagem de volta para a imagem original
+    for y in range(new_height):
+        for x in range(new_width):
+            # Coordenadas na imagem original
+            orig_x = x / scale_x
+            orig_y = y / scale_y
+
+            # Interpolação bilinear
+            x0 = int(orig_x)
+            x1 = min(x0 + 1, width - 1)
+            y0 = int(orig_y)
+            y1 = min(y0 + 1, height - 1)
+
+            # Calcular os pesos para interpolação
+            wa = (x1 - orig_x) * (y1 - orig_y)
+            wb = (orig_x - x0) * (y1 - orig_y)
+            wc = (x1 - orig_x) * (orig_y - y0)
+            wd = (orig_x - x0) * (orig_y - y0)
+
+            # Aplicar interpolação
+            scaled_image[y, x] = wa * image[y0, x0] + wb * image[y0, x1] + wc * image[y1, x0] + wd * image[y1, x1]
+
     cv2.imwrite(output_path, scaled_image)
+
     return scaled_image
 
 
@@ -269,7 +437,7 @@ def reflect_image(image, axis, output_path):
             reflected_image[i] = image[height - 1 - i]
 
     # Converter para um array do NumPy
-        np_image = np.array(reflected_image, dtype=np.uint8)
+    np_image = np.array(reflected_image, dtype=np.uint8)
 
     # Salvar a imagem
     cv2.imwrite(output_path, np_image)
