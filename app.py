@@ -1,3 +1,21 @@
+# ==============================================================================
+# Nome do Projeto: LuminaPixelStudio
+# Autor: Jáder Louis @Prism411, Nataly Tobias @natalytobias
+# Data de Criação: 10/01/2024
+#
+# Estrutura do Projeto:
+#   - interfaceMenu: O arquivo principal que executa o programa.
+#   - imageProcesser: Módulo responsável pelas funções de processamento de Imagem.
+#   - luminaProcessing/: Diretório que salva as imagens processadas.
+#   - icons/: Guarda os Icones utilizados no projeto.
+#   - docs/: Documentação do projeto.
+#   - scripts/: Funções em octave que foram base para o aplicativo.
+#   - imagensComparacao/: Deve ser ignorada, existem apenas para repassar informações da Q.2
+#   - questao2: o modulo "questao2.py" deve ser ignorado pois é apenas para realizar a Q.2
+#
+# Notas Adicionais:
+#   O modulo "app.py" é o modulo para ativar a antiga versão do aplicativo! PODE SER UM POUCO INSTAVEL!!!!
+# ==============================================================================
 import os
 import shutil
 import tkinter as tk

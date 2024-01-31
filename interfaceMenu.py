@@ -9,9 +9,12 @@
 #   - luminaProcessing/: Diretório que salva as imagens processadas.
 #   - icons/: Guarda os Icones utilizados no projeto.
 #   - docs/: Documentação do projeto.
+#   - scripts/: Funções em octave que foram base para o aplicativo.
+#   - imagensComparacao/: Deve ser ignorada, existem apenas para repassar informações da Q.2
+#   - questao2: o modulo "questao2.py" deve ser ignorado pois é apenas para realizar a Q.2
 #
 # Notas Adicionais:
-#   Aqui é a função main do aplicativo.
+#   Aqui é a função main do aplicativo, junto com o proprio frontend.
 # ==============================================================================
 
 import os
