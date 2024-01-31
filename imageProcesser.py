@@ -1,10 +1,25 @@
+# ==============================================================================
+# Nome do Projeto: LuminaPixelStudio
+# Autor: Jáder Louis @Prism411, Nataly Tobias @natalytobias
+# Data de Criação: 10/01/2024
+#
+# Estrutura do Projeto:
+#   - interfaceMenu: O arquivo principal que executa o programa.
+#   - imageProcesser: Módulo responsável pelas funções de processamento de Imagem.
+#   - luminaProcessing/: Diretório que salva as imagens processadas.
+#   - icons/: Guarda os Icones utilizados no projeto.
+#   - docs/: Documentação do projeto.
+#
+# Notas Adicionais:
+#   Nesta função aqui se encontram as principais funções de processamento de imagens.
+# ==============================================================================
 import math
-
 from PIL import Image
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 from scipy.ndimage import generic_filter
+
 
 
 def redimensionar_imagem(image_path, novo_tamanho):
@@ -539,14 +554,6 @@ def vertical_pinch(image, amount, output_path):
     cv2.imwrite(output_path, pinched_image)
     return pinched_image
 
-
-import numpy as np
-import cv2
-
-import numpy as np
-import cv2
-
-
 def edge_pinch(image, amount, output_path):
     rows, cols = image.shape[:2]
     center_x, center_y = cols / 2, rows / 2
@@ -650,11 +657,6 @@ def aplicar_filtro_media(imagem, kernel_size, output_path):
     # Salvar a imagem filtrada
     Image.fromarray(imagem_filtrada).save(output_path)
     return imagem_filtrada
-
-
-import numpy as np
-import cv2
-from PIL import Image
 
 def aplicar_sobel(imagem, output_path):
     # Converter para escala de cinza se for uma imagem colorida

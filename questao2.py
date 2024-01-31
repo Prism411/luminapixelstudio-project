@@ -1,3 +1,18 @@
+# ==============================================================================
+# Nome do Projeto: LuminaPixelStudio
+# Autor: Jáder Louis @Prism411, Nataly Tobias @natalytobias
+# Data de Criação: 10/01/2024
+#
+# Estrutura do Projeto:
+#   - interfaceMenu: O arquivo principal que executa o programa.
+#   - imageProcesser: Módulo responsável pelas funções de processamento de Imagem.
+#   - luminaProcessing/: Diretório que salva as imagens processadas.
+#   - icons/: Guarda os Icones utilizados no projeto.
+#   - docs/: Documentação do projeto.
+#
+# Notas Adicionais:
+#   Aqui é o modulo responsavel por realizar a segunda questão do projeto.
+# ==============================================================================
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
