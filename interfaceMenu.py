@@ -15,6 +15,7 @@
 #
 # Notas Adicionais:
 #   Aqui é a função main do aplicativo, junto com o proprio frontend.
+#   Para impedir o computador do usuario de se auto-destruir, foi adicionado uma precaução na função de scalling.
 # ==============================================================================
 
 import os
@@ -443,13 +444,17 @@ class ToplevelWindow(customtkinter.CTkToplevel):
         image = imageTransform(self.file_path)
         scale_x = float(self.x_entry.get())
         scale_y = float(self.y_entry.get())
-        if scale_x > 1:
+        if scale_x > 2 and opr == "Scalling":
             messagebox.showwarning("CUIDADO", "Cuidado ao Usar Valores Maiores que 1!\nisto é um aumento de proporção na resolução!")
-        if scale_y > 1:
+        if scale_y > 2 and opr == "Scalling":
             messagebox.showwarning("CUIDADO", "Cuidado ao Usar Valores Maiores que 1!\nisto é um aumento de proporção na resolução!")
         if opr == "Cisalhamento":
             shear_image(image, scale_x, scale_y, self.file_path)
         if opr == "Scalling":
+            if scale_x > 10: #Medida de Segurança
+                scale_x = 1
+            if scale_y > 10: #Medida de Segurança
+                scale_y = 1
             scale_image(image, scale_x, scale_y, self.file_path)
         self.atualiza_imagem(self.file_path)
 
