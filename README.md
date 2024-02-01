@@ -1,4 +1,5 @@
 # LUMINA PIXEL STUDIO
+> :warning:  Atenção com a passagem de parametros, especialmente nas funções de scalling, comece com valores pequenos de 0.1, 0.2 e por assim adiante! :warning:
 ### O Que é o Lumina Pixel Studio
   O lumina Pixel Studio é um aplicativo de manipulação de imagens no ambito educacional para estudar como a transformação/processamento pode afetar imagens, foi feito como uma espécie de experimento pois todas as funções foram implementadas á mão
 
@@ -36,7 +37,9 @@
 > :warning:  Atenção com a passagem de parametros, especialmente nas funções de scalling, comece com valores pequenos de 0.1, 0.2 e por assim adiante! :warning:
 
 ### Documentação do Projeto:
-[Diagrama UML](Documentação/diagramaUML.pdf) [Artigo I](Documentação/luminapixelstudio-shortpaper.pdf) [Artigo II](Documentação/luminapixelstudioQuestao2-shortpaper.pdf)
+- [Diagrama UML](Documentação/diagramaUML.pdf)
+- [Artigo I](Documentação/luminapixelstudio-shortpaper.pdf)
+- [Artigo II](Documentação/luminapixelstudioQuestao2-shortpaper.pdf)
 
 ### Contatos:
 
