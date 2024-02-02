@@ -283,7 +283,7 @@ class ToplevelWindow(customtkinter.CTkToplevel):
 
         self.filtro_button = customtkinter.CTkButton(self.my_frame, text="Processar Filtro",
                                                   command=self.filtro_operation)
-        self.filtro_button.place(x=5, y=240)
+        self.filtro_button.place(x=510, y=240)
 
         ##FILTROS ABAIXO
 
